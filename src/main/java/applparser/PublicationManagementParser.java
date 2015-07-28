@@ -24,21 +24,6 @@ public class PublicationManagementParser extends ApplParser {
 
     @Override
     public void parse(String name, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
-        if (this.addAssociations && !name.equals("AssociatedWith")) {
-            map.put("associations", this.associations);
-            this.addAssociations = false;
-        }
-
-        if (this.addInstructions && !name.equals("Instruction")) {
-            map.put("outinginstructions", this.instructions);
-            this.addInstructions = false;
-        }
-
-        if (this.addTimeRestrictions && !name.equals("TimeRestrictions")) {
-            map.put("timerestrictions", this.timeRestrictions);
-            this.addTimeRestrictions = false;
-        }
-
         switch (name) {
             case "RecordType":
             case "FilingType":
@@ -83,17 +68,17 @@ public class PublicationManagementParser extends ApplParser {
     @Override
     public void cleanup(Map<String, Object> map) {
         if (this.addAssociations) {
-            map.put("associations", this.associations);
+            map.replace("associations", null, this.associations);
             this.addAssociations = false;
         }
 
         if (this.addInstructions) {
-            map.put("outinginstructions", this.instructions);
+            map.replace("outinginstructions", null, this.instructions);
             this.addInstructions = false;
         }
 
         if (this.addTimeRestrictions) {
-            map.put("timerestrictions", this.timeRestrictions);
+            map.replace("timerestrictions", null, this.timeRestrictions);
             this.addTimeRestrictions = false;
         }
     }
@@ -192,7 +177,10 @@ public class PublicationManagementParser extends ApplParser {
 
         String id = xmlr.getElementText();
         if (id != null) {
-            this.addAssociations = true;
+            if (!this.addAssociations) {
+                map.put("associations", null);
+                this.addAssociations = true;
+            }
 
             Map<String, Object> ass = new LinkedHashMap<String, Object>();
 
@@ -251,7 +239,10 @@ public class PublicationManagementParser extends ApplParser {
         if (type.equalsIgnoreCase("Outing")) {
             String text = xmlr.getElementText();
             if (text != null) {
-                this.addInstructions = true;
+                if (!this.addInstructions) {
+                    map.put("outinginstructions", null);
+                    this.addInstructions = true;
+                }
                 this.instructions.add(text);
             }
         }
@@ -271,7 +262,10 @@ public class PublicationManagementParser extends ApplParser {
 
         String key = String.format("%s%s", system, zone).toLowerCase();
         if (key.length() > 0) {
-            this.addTimeRestrictions = true;
+            if (!this.addTimeRestrictions) {
+                map.put("timerestrictions", null);
+                this.addTimeRestrictions = true;
+            }
 
             if (!this.include.containsKey(key)) {
                 String include = xmlr.getAttributeValue("", "Include");
