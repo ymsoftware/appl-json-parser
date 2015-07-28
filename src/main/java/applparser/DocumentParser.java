@@ -63,6 +63,9 @@ public class DocumentParser {
                         case "PublicationManagement":
                             parser = new PublicationManagementParser();
                             break;
+                        case "NewsLines":
+                            parser = new NewsLinesParser();
+                            break;
                         default:
                             if (parser != null) {
                                 parser.parse(name, xmlr, map);
@@ -73,6 +76,7 @@ public class DocumentParser {
                         case "Publication":
                         case "Identification":
                         case "PublicationManagement":
+                        case "NewsLines":
                             parser.cleanup(map);
                             parser = null;
                             break;
