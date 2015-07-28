@@ -19,6 +19,8 @@ public class NewsLinesParser extends ApplParser {
     private boolean isPhotographer;
     private boolean isCaptionwriter;
     private boolean isEditor;
+    private List<String> overlines;
+    private boolean addOverlines;
 
     @Override
     public void parse(String name, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
@@ -37,6 +39,7 @@ public class NewsLinesParser extends ApplParser {
                 setOriginalBylines(name, xmlr, map);
                 break;
             case "OverLine":
+                setOverlines(name, xmlr, map);
                 break;
             case "CreditLine":
                 break;
@@ -69,10 +72,10 @@ public class NewsLinesParser extends ApplParser {
             this.addBylines = false;
         }
 
-//        if (this.addInstructions) {
-//            map.replace("outinginstructions", null, this.instructions);
-//            this.addInstructions = false;
-//        }
+        if (this.addOverlines) {
+            map.replace("overlines", null, this.overlines);
+            this.addOverlines = false;
+        }
     }
 
     private void setOriginalBylines(String name, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
@@ -185,6 +188,21 @@ public class NewsLinesParser extends ApplParser {
 
                 this.bylines.add(add);
             }
+        }
+    }
+
+    private void setOverlines(String name, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
+        if (this.overlines == null) {
+            this.overlines = new ArrayList<String>();
+        }
+
+        String text = xmlr.getElementText();
+        if (text != null) {
+            if (!this.addOverlines) {
+                map.put("overlines", null);
+                this.addOverlines = true;
+            }
+            this.overlines.add(text);
         }
     }
 }

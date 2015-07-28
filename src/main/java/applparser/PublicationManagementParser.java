@@ -21,6 +21,8 @@ public class PublicationManagementParser extends ApplParser {
     private List<Map<String, Object>> timeRestrictions;
     private Map<String, Boolean> include;
     private boolean addTimeRestrictions;
+    private List<String> signals;
+    private boolean addSignals;
 
     @Override
     public void parse(String name, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
@@ -62,6 +64,12 @@ public class PublicationManagementParser extends ApplParser {
             case "TimeRestrictions":
                 setTimeRestrictions(name, xmlr, map);
                 break;
+            case "ExplicitWarning":
+                setSignal("explicitcontent", "1", xmlr, map);
+                break;
+            case "IsDigitized":
+                setSignal("isnotdigitized", "false", xmlr, map);
+                break;
         }
     }
 
@@ -80,6 +88,11 @@ public class PublicationManagementParser extends ApplParser {
         if (this.addTimeRestrictions) {
             map.replace("timerestrictions", null, this.timeRestrictions);
             this.addTimeRestrictions = false;
+        }
+
+        if (this.addSignals) {
+            map.replace("signals", null, this.signals);
+            this.addSignals = false;
         }
     }
 
@@ -276,6 +289,21 @@ public class PublicationManagementParser extends ApplParser {
                 times.put(key, isInclude);
                 this.timeRestrictions.add(times);
             }
+        }
+    }
+
+    private void setSignal(String signal, String test, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
+        if (this.signals == null) {
+            this.signals = new ArrayList<String>();
+        }
+
+        String text = xmlr.getElementText();
+        if (text != null && text.equalsIgnoreCase(test)) {
+            if (!this.addSignals) {
+                map.put("signals", null);
+                this.addSignals = true;
+            }
+            this.signals.add(signal);
         }
     }
 

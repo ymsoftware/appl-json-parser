@@ -36,6 +36,8 @@ public class PublicationManagementTest {
                 + "<AssociatedWith CompositionType=\"StandardText\">nBc</AssociatedWith>"
                 + "<Editorial><Type>Advance</Type><Type>HoldForRelease</Type></Editorial>"
                 + "<TimeRestrictions System=\"a\" Zone=\"b\" Include=\"true\"></TimeRestrictions>"
+                + "<ExplicitWarning>1</ExplicitWarning>"
+                + "<IsDigitized>false</IsDigitized>"
                 + "<Instruction Type=\"Outing\">Include this</Instruction>"
                 + "<Instruction Type=\"Test\">Exclude this</Instruction>"
                 + "</PublicationManagement>"
@@ -99,6 +101,11 @@ public class PublicationManagementTest {
         assertEquals(true, testNode.isArray());
         assertEquals(1, testNode.size());
         assertEquals(true, testNode.elements().next().get("ab").asBoolean());
+
+        testNode = rootNode.path("signals");
+        assertEquals(true, testNode.isArray());
+        assertEquals(2, testNode.size());
+        assertEquals("explicitcontent", testNode.elements().next().asText());
     }
 
     @Test

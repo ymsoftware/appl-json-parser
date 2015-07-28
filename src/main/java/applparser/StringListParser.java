@@ -17,7 +17,10 @@ public class StringListParser extends ListParser<String> {
     @Override
     void add(List<String> list, XMLStreamReader xmlr) throws XMLStreamException {
         if (name.equals(xmlr.getLocalName())) {
-            list.add(xmlr.getElementText());
+            String text = xmlr.getElementText();
+            if (!list.contains(text)) {
+                list.add(text);
+            }
         }
     }
 }
