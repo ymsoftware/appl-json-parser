@@ -64,7 +64,22 @@ public class DocumentParser {
                             parser = new PublicationManagementParser();
                             break;
                         case "NewsLines":
-                            parser = new NewsLinesParser();
+                            parser = new NewsLinesParser(map);
+                            break;
+                        case "AdministrativeMetadata":
+                            parser = new AdministrativeMetadataParser();
+                            break;
+                        case "RightsMetadata":
+                            parser = new RightsMetadataParser();
+                            break;
+                        case "DescriptiveMetadata":
+                            parser = new DescriptiveMetadataParser();
+                            break;
+                        case "FilingMetadata":
+                            parser = new FilingMetadataParser();
+                            break;
+                        case "PublicationComponent":
+                            parser = new PublicationComponentParser();
                             break;
                         default:
                             if (parser != null) {
@@ -77,6 +92,11 @@ public class DocumentParser {
                         case "Identification":
                         case "PublicationManagement":
                         case "NewsLines":
+                        case "AdministrativeMetadata":
+                        case "RightsMetadata":
+                        case "DescriptiveMetadata":
+                        case "FilingMetadata":
+                        case "PublicationComponent":
                             parser.cleanup(map);
                             parser = null;
                             break;

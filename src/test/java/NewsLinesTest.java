@@ -12,6 +12,167 @@ import static org.junit.Assert.assertEquals;
  */
 public class NewsLinesTest {
     @Test
+    public void test() throws IOException {
+        String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+                + "<Publication>"
+                + "<Identification>"
+                + "<MediaType>Text</MediaType>"
+                + "</Identification>"
+                + "<NewsLines>"
+                + "<ExtendedHeadLine>Extended HeadLine</ExtendedHeadLine>"
+                + "<OriginalHeadLine>Original HeadLine</OriginalHeadLine>"
+                + "<HeadLine>HeadLine</HeadLine>"
+                + "<Title>Title</Title>"
+                + "<ByLine Title=\"YM\">By Yuri Metelkin</ByLine>"
+                + "<ByLine Title=\"AP\">By AP</ByLine>"
+                + "<ByLineOriginal Title=\"AB\">By Yuri Metelkin</ByLineOriginal>"
+                + "<DateLine>DateLine</DateLine>"
+                + "<OverLine>OverLine 1</OverLine>"
+                + "<OverLine>OverLine 2</OverLine>"
+                + "<CreditLine Id=\"AP\" />"
+                + "<CopyrightLine>Copyright notice</CopyrightLine>"
+                + "<KeywordLine>KeywordLine 1</KeywordLine>"
+                + "<KeywordLine>KeywordLine 2</KeywordLine>"
+                + "<NameLine Parametric=\"PERSON_FEATURED\">YM</NameLine>"
+                + "<NameLine>AB</NameLine>"
+                + "</NewsLines>"
+                + "</Publication>";
+
+        DocumentParser parser = new DocumentParser();
+        String json = parser.parse(appl);
+
+        ObjectMapper m = new ObjectMapper();
+        JsonNode rootNode = m.readTree(json);
+        JsonNode testNode = rootNode.path("title");
+        assertEquals("HeadLine", testNode.asText());
+
+        testNode = rootNode.path("headline");
+        assertEquals("Extended HeadLine", testNode.asText());
+
+        testNode = rootNode.path("bylines");
+        assertEquals(true, testNode.isArray());
+        assertEquals(1, testNode.size());
+        assertEquals("AB", testNode.elements().next().get("title").asText());
+
+        testNode = rootNode.path("dateline");
+        assertEquals("DateLine", testNode.asText());
+
+        testNode = rootNode.path("overlines");
+        assertEquals(true, testNode.isArray());
+        assertEquals(2, testNode.size());
+        assertEquals("OverLine 1", testNode.elements().next().asText());
+
+        testNode = rootNode.path("creditlineid");
+        assertEquals("AP", testNode.asText());
+
+        testNode = rootNode.path("copyrightnotice");
+        assertEquals("Copyright notice", testNode.asText());
+
+        testNode = rootNode.path("keywordlines");
+        assertEquals(true, testNode.isArray());
+        assertEquals(2, testNode.size());
+        assertEquals("KeywordLine 1", testNode.elements().next().asText());
+
+        testNode = rootNode.path("persons");
+        assertEquals(true, testNode.isArray());
+        assertEquals(1, testNode.size());
+        assertEquals("YM", testNode.elements().next().get("name").asText());
+    }
+
+    @Test
+    public void testHeadlineAndTitle() throws IOException {
+        String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+                + "<Publication>"
+                + "<Identification>"
+                + "<MediaType>Text</MediaType>"
+                + "</Identification>"
+                + "<NewsLines>"
+                + "<ExtendedHeadLine>Extended HeadLine</ExtendedHeadLine>"
+                + "<OriginalHeadLine>Original HeadLine</OriginalHeadLine>"
+                + "<HeadLine>HeadLine</HeadLine>"
+                + "<Title>Title</Title>"
+                + "</NewsLines>"
+                + "</Publication>";
+
+        DocumentParser parser = new DocumentParser();
+        String json = parser.parse(appl);
+
+        ObjectMapper m = new ObjectMapper();
+        JsonNode rootNode = m.readTree(json);
+        JsonNode testNode = rootNode.path("title");
+        assertEquals("HeadLine", testNode.asText());
+        testNode = rootNode.path("headline");
+        assertEquals("Extended HeadLine", testNode.asText());
+
+        appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+                + "<Publication>"
+                + "<Identification>"
+                + "<MediaType>Text</MediaType>"
+                + "</Identification>"
+                + "<NewsLines>"
+                + "<OriginalHeadLine>Original HeadLine</OriginalHeadLine>"
+                + "<HeadLine>HeadLine</HeadLine>"
+                + "<Title>Title</Title>"
+                + "</NewsLines>"
+                + "</Publication>";
+
+        parser = new DocumentParser();
+        json = parser.parse(appl);
+
+        m = new ObjectMapper();
+        rootNode = m.readTree(json);
+        testNode = rootNode.path("title");
+        assertEquals("HeadLine", testNode.asText());
+
+        testNode = rootNode.path("headline");
+        assertEquals("Original HeadLine", testNode.asText());
+
+        appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+                + "<Publication>"
+                + "<Identification>"
+                + "<MediaType>Text</MediaType>"
+                + "</Identification>"
+                + "<NewsLines>"
+                + "<HeadLine>HeadLine</HeadLine>"
+                + "<Title>Title</Title>"
+                + "</NewsLines>"
+                + "</Publication>";
+
+        parser = new DocumentParser();
+        json = parser.parse(appl);
+
+        m = new ObjectMapper();
+        rootNode = m.readTree(json);
+        testNode = rootNode.path("title");
+        assertEquals("Title", testNode.asText());
+
+        testNode = rootNode.path("headline");
+        assertEquals("HeadLine", testNode.asText());
+
+        appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+                + "<Publication>"
+                + "<Identification>"
+                + "<MediaType>Video</MediaType>"
+                + "</Identification>"
+                + "<NewsLines>"
+                + "<HeadLine>HeadLine</HeadLine>"
+                + "<Title>Title</Title>"
+                + "</NewsLines>"
+                + "</Publication>";
+
+        parser = new DocumentParser();
+        json = parser.parse(appl);
+
+        m = new ObjectMapper();
+        rootNode = m.readTree(json);
+        testNode = rootNode.path("title");
+        assertEquals("Title", testNode.asText());
+
+        testNode = rootNode.path("headline");
+        assertEquals("HeadLine", testNode.asText());
+    }
+
+    @Test
     public void testBylines() throws IOException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
                 + "<Publication>"

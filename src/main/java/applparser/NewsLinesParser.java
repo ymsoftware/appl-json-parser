@@ -11,6 +11,11 @@ import java.util.Map;
  * Created by ymetelkin on 7/28/15.
  */
 public class NewsLinesParser extends ApplParser {
+    private String type;
+    private String title;
+    private String headline;
+    private String extendedHeadline;
+    private String originalHeadline;
     private List<Map<String, String>> bylines;
     private List<Map<String, String>> originalBylines;
     private boolean addBylines;
@@ -21,16 +26,38 @@ public class NewsLinesParser extends ApplParser {
     private boolean isEditor;
     private List<String> overlines;
     private boolean addOverlines;
+    private List<String> keywordlines;
+    private boolean addKeywordlines;
+    private List<Map<String, Object>> persons;
+    private boolean addPersons;
+
+    public NewsLinesParser(Map<String, Object> map) {
+        this.type = map.containsKey("type") ? (String) map.get("type") : "text";
+        map.put("headline", null);
+        map.put("title", null);
+    }
 
     @Override
     public void parse(String name, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
         switch (name) {
+            case "ExtendedHeadLine":
+                this.extendedHeadline = xmlr.getElementText();
+                break;
+            case "OriginalHeadLine":
+                this.originalHeadline = xmlr.getElementText();
+                break;
+            case "HeadLine":
+                this.headline = xmlr.getElementText();
+                break;
+            case "Title":
+                this.title = xmlr.getElementText();
+                break;
             case "DateLine":
             case "RightsLine":
             case "SeriesLine":
             case "OutCue":
             case "LocationLine":
-                parseId(name.toLowerCase(), xmlr.getElementText(), map);
+                parse(name.toLowerCase(), xmlr.getElementText(), map);
                 break;
             case "ByLine":
                 setBylines(name, xmlr, map);
@@ -42,18 +69,30 @@ public class NewsLinesParser extends ApplParser {
                 setOverlines(name, xmlr, map);
                 break;
             case "CreditLine":
+                String id = xmlr.getAttributeValue("", "Id");
+                if (id != null) {
+                    map.put("creditlineid", id);
+                }
                 break;
             case "CopyrightLine":
+                map.put("copyrightnotice", xmlr.getElementText());
+                map.put("copyrightholder", null);
+                map.put("copyrightdate", null);
                 break;
             case "KeywordLine":
+                setKeywordlines(name, xmlr, map);
                 break;
             case "NameLine":
+                setPersons(name, xmlr, map);
                 break;
         }
     }
 
     @Override
     public void cleanup(Map<String, Object> map) {
+        setTitle(map);
+        setHeadline(map);
+
         if (this.addBylines) {
             if (this.originalBylines == null) {
                 map.replace("bylines", null, this.bylines);
@@ -75,6 +114,74 @@ public class NewsLinesParser extends ApplParser {
         if (this.addOverlines) {
             map.replace("overlines", null, this.overlines);
             this.addOverlines = false;
+        }
+
+        if (this.addKeywordlines) {
+            map.replace("keywordlines", null, this.keywordlines);
+            this.addKeywordlines = false;
+        }
+
+        if (this.addPersons) {
+            map.replace("persons", null, this.persons);
+            this.addPersons = false;
+        }
+    }
+
+    private void setTitle(Map<String, Object> map) {
+        if (this.type.equals("text") || this.type.equals("complexdata")) {
+            //If NewsLines/ExtendedHeadLine AND NewsLines/HeadLine exist use NewsLines/HeadLine
+            //If NewsLines/OriginalHeadLine AND NewsLines/HeadLine exist use NewsLines/HeadLine
+            //If NewsLines/HeadLine AND NewsLines/Title exist use NewsLines/Title
+            //FilingMetadata[1]/SlugLine (only when FilingMetadata[1]/Category="l" or "s")
+            //First ten words from PublicationComponent[@Role="Main" and @MediaType="Text"]/TextContentItem/DataContent/text()
+
+            if (this.headline == null) {
+                this.title = null;
+            } else {
+                if (this.extendedHeadline != null || this.originalHeadline != null) {
+                    this.title = this.headline;
+                }
+            }
+        }
+
+        if (this.title != null) {
+            map.replace("title", null, this.title);
+        }
+    }
+
+    private void setHeadline(Map<String, Object> map) {
+        String title = this.title;
+
+        if (this.type.equals("text") || this.type.equals("complexdata")) {
+            if (this.extendedHeadline != null) {
+                this.headline = this.extendedHeadline;
+            } else if (this.originalHeadline != null) {
+                this.headline = this.originalHeadline;
+            } else if (this.headline == null && this.title != null) {
+                this.headline = this.title;
+            }
+        } else if (this.type.equals("photo") || this.type.equals("graphic")) {
+            if (this.title != null) {
+                this.headline = this.title;
+            }
+        } else if (this.type.equals("video")) {
+            if (map.containsKey("function") && ((String) map.get("function")).equalsIgnoreCase("APTNLibrary")) {
+                if (this.title != null) {
+                    this.headline = this.title;
+                }
+            } else {
+                if (this.headline == null && this.title != null) {
+                    this.headline = this.title;
+                }
+            }
+        } else if (this.type.equals("audio")) {
+            if (this.headline == null) {
+                this.headline = this.title;
+            }
+        }
+
+        if (this.headline != null) {
+            map.replace("headline", null, this.headline);
         }
     }
 
@@ -203,6 +310,45 @@ public class NewsLinesParser extends ApplParser {
                 this.addOverlines = true;
             }
             this.overlines.add(text);
+        }
+    }
+
+    private void setKeywordlines(String name, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
+        if (this.keywordlines == null) {
+            this.keywordlines = new ArrayList<String>();
+        }
+
+        String text = xmlr.getElementText();
+        if (text != null) {
+            if (!this.addKeywordlines) {
+                map.put("keywordlines", null);
+                this.addKeywordlines = true;
+            }
+            this.keywordlines.add(text);
+        }
+    }
+
+    private void setPersons(String name, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
+        if (this.persons == null) {
+            this.persons = new ArrayList<Map<String, Object>>();
+        }
+
+        String parametric = xmlr.getAttributeValue("", "Parametric");
+        if (parametric != null && parametric.equalsIgnoreCase("PERSON_FEATURED")) {
+            String text = xmlr.getElementText();
+            if (text != null) {
+                if (!this.addPersons) {
+                    map.put("persons", null);
+                    this.addPersons = true;
+                }
+
+                Map<String, Object> person = new LinkedHashMap<String, Object>();
+                person.put("name", text);
+                person.put("rel", new String[]{"personfeatured"});
+                person.put("creator", "Editorial");
+
+                this.persons.add(person);
+            }
         }
     }
 }
