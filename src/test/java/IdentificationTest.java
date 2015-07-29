@@ -13,7 +13,7 @@ public class IdentificationTest {
     @Test
     public void test() throws IOException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                + "<Publication>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<Identification>"
                 + "<ItemId>aBc</ItemId>"
                 + "<RecordId>aBc</RecordId>"

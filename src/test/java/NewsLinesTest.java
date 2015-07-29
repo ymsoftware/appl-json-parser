@@ -14,7 +14,7 @@ public class NewsLinesTest {
     @Test
     public void test() throws IOException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                + "<Publication>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<Identification>"
                 + "<MediaType>Text</MediaType>"
                 + "</Identification>"
@@ -82,7 +82,7 @@ public class NewsLinesTest {
     @Test
     public void testHeadlineAndTitle() throws IOException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                + "<Publication>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<Identification>"
                 + "<MediaType>Text</MediaType>"
                 + "</Identification>"
@@ -105,7 +105,7 @@ public class NewsLinesTest {
         assertEquals("Extended HeadLine", testNode.asText());
 
         appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                + "<Publication>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<Identification>"
                 + "<MediaType>Text</MediaType>"
                 + "</Identification>"
@@ -128,7 +128,7 @@ public class NewsLinesTest {
         assertEquals("Original HeadLine", testNode.asText());
 
         appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                + "<Publication>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<Identification>"
                 + "<MediaType>Text</MediaType>"
                 + "</Identification>"
@@ -150,7 +150,7 @@ public class NewsLinesTest {
         assertEquals("HeadLine", testNode.asText());
 
         appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                + "<Publication>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<Identification>"
                 + "<MediaType>Video</MediaType>"
                 + "</Identification>"
@@ -175,7 +175,7 @@ public class NewsLinesTest {
     @Test
     public void testBylines() throws IOException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                + "<Publication>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<NewsLines>"
                 + "<ByLine Title=\"YM\">By Yuri Metelkin</ByLine>"
                 + "<ByLine Title=\"AP\">By AP</ByLine>"
@@ -194,7 +194,7 @@ public class NewsLinesTest {
         assertEquals("AB", testNode.elements().next().get("title").asText());
 
         appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                + "<Publication>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<NewsLines>"
                 + "<ByLine Title=\"YM\">By Yuri Metelkin</ByLine>"
                 + "<ByLine Title=\"AP\">By AP</ByLine>"
@@ -213,7 +213,7 @@ public class NewsLinesTest {
         assertEquals("YM", testNode.elements().next().get("title").asText());
 
         appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                + "<Publication>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<NewsLines>"
                 + "<ByLine Title=\"EditedBy\" Parametric=\"Photographer\">Yuri Metelkin</ByLine>"
                 + "<ByLine Title=\"NYC\">Yuri Metelkin</ByLine>"

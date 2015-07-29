@@ -15,7 +15,7 @@ public class PublicationManagementTest {
     @Test
     public void test() throws IOException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                + "<Publication>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<Identification>"
                 + "<ItemId>aBc</ItemId>"
                 + "<MediaType>Text</MediaType>"
@@ -111,7 +111,7 @@ public class PublicationManagementTest {
     @Test
     public void testEditorilTypes() throws IOException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                + "<Publication>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<Identification>"
                 + "<ItemId>aBc</ItemId>"
                 + "</Identification>"
@@ -138,7 +138,7 @@ public class PublicationManagementTest {
         assertEquals("2015-07-11T16:20:05Z", testNode.asText());
 
         appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                + "<Publication>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<Identification>"
                 + "<ItemId>aBc</ItemId>"
                 + "</Identification>"
@@ -165,7 +165,7 @@ public class PublicationManagementTest {
         assertEquals("2015-07-11T16:20:05Z", testNode.asText());
 
         appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                + "<Publication>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<Identification>"
                 + "<ItemId>aBc</ItemId>"
                 + "</Identification>"
@@ -192,7 +192,7 @@ public class PublicationManagementTest {
         assertEquals(true, testNode.isMissingNode());
 
         appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                + "<Publication>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<Identification>"
                 + "<ItemId>aBc</ItemId>"
                 + "</Identification>"
@@ -219,7 +219,7 @@ public class PublicationManagementTest {
     @Test
     public void testFirstCreated() throws IOException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                + "<Publication>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<PublicationManagement>"
                 + "<FirstCreated Year=\"2015\" Month=\"7\" Day=\"11\" Time=\"16:20:05\" />"
                 + "</PublicationManagement>"
@@ -234,7 +234,7 @@ public class PublicationManagementTest {
         assertEquals("2015-07-11T16:20:05Z", testNode.asText());
 
         appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                + "<Publication>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<PublicationManagement>"
                 + "<FirstCreated Year=\"2015\" Month=\"7\" Day=\"1\" />"
                 + "</PublicationManagement>"
@@ -249,7 +249,7 @@ public class PublicationManagementTest {
         assertEquals("2015-07-01", testNode.asText());
 
         appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                + "<Publication>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<PublicationManagement>"
                 + "<FirstCreated Year=\"2015\" Month=\"7\" />"
                 + "</PublicationManagement>"
@@ -264,7 +264,7 @@ public class PublicationManagementTest {
         assertEquals("2015-07", testNode.asText());
 
         appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                + "<Publication>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<PublicationManagement>"
                 + "<FirstCreated Year=\"2015\" />"
                 + "</PublicationManagement>"
@@ -282,7 +282,7 @@ public class PublicationManagementTest {
     @Test
     public void testTimeRestrictions() throws IOException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-                + "<Publication>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<PublicationManagement>"
                 + "<TimeRestrictions System=\"a\" Zone=\"b\" Include=\"true\"></TimeRestrictions>"
                 + "<TimeRestrictions System=\"a\" Include=\"true\"></TimeRestrictions>"
