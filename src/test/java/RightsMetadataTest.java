@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.Iterator;
 
 import static org.junit.Assert.assertEquals;
 
@@ -98,5 +99,54 @@ public class RightsMetadataTest {
         assertEquals(true, testNode.isMissingNode());
         testNode = rootNode.path("copyrightdate");
         assertEquals(2014, testNode.asInt());
+    }
+
+    @Test
+    public void testUsageRights() throws IOException {
+        String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
+                + "<RightsMetadata>"
+                + "<UsageRights>"
+                + "<UsageType>MobileNews</UsageType>"
+                + "</UsageRights>"
+                + "<UsageRights>"
+                + "<UsageType>Marketplace</UsageType>"
+                + "<Geography>us</Geography>"
+                + "<RightsHolder>AP</RightsHolder>"
+                + "<Limitations>nj</Limitations>"
+                + "<Group Type=\"Corporate\" Id=\"abc\">YM</Group>"
+                + "</UsageRights>"
+                + "</RightsMetadata>"
+                + "</Publication>";
+
+        DocumentParser parser = new DocumentParser();
+        String json = parser.parse(appl);
+
+        ObjectMapper m = new ObjectMapper();
+        JsonNode rootNode = m.readTree(json);
+        JsonNode testNode = rootNode.path("usagerights");
+        assertEquals(true, testNode.isArray());
+        assertEquals(2, testNode.size());
+
+        Iterator<JsonNode> elements = testNode.elements();
+
+        JsonNode first = elements.next();
+        assertEquals("MobileNews", first.get("usagetype").asText());
+
+        JsonNode last = elements.next();
+        assertEquals("Marketplace", last.get("usagetype").asText());
+        assertEquals("AP", last.get("rightsholder").asText());
+
+        testNode = last.get("geography");
+        assertEquals(true, testNode.isArray());
+        assertEquals(1, testNode.size());
+
+        testNode = last.get("limitations");
+        assertEquals(true, testNode.isArray());
+        assertEquals(1, testNode.size());
+
+        testNode = last.get("groups");
+        assertEquals(true, testNode.isArray());
+        assertEquals(1, testNode.size());
     }
 }

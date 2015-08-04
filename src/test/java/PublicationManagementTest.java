@@ -71,7 +71,7 @@ public class PublicationManagementTest {
         assertEquals("2015-07-11T16:20:05Z", testNode.asText());
 
         testNode = rootNode.path("itemenddatetime");
-        assertEquals("2015-07-11", testNode.asText());
+        assertEquals("2015-07-11T00:00:00Z", testNode.asText());
 
         testNode = rootNode.path("firstcreated");
         assertEquals("2015-07-11T16:20:05Z", testNode.asText());

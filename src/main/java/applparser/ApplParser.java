@@ -3,6 +3,9 @@ package applparser;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -45,6 +48,29 @@ public abstract class ApplParser {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return null;
+    }
+
+    public String parseDate(String date) {
+        if (date != null && date.length() > 1) {
+            if (date.indexOf('T') > 0) {
+                if (date.endsWith("GMT")) {
+                    date = date.replace("GMT", "Z");
+                } else if (!date.endsWith("Z")) {
+                    date = date + "Z";
+                }
+
+                return date;
+            }
+
+            try {
+                Date test = new SimpleDateFormat("yyyy-MM-dd").parse(date);
+                return date + "T00:00:00Z";
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        }
+
         return null;
     }
 }

@@ -97,16 +97,8 @@ public class PublicationManagementParser extends ApplParser {
     }
 
     private void setDate(String name, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
-        String date = xmlr.getElementText();
-        if (date != null && date.length() > 1) {
-            if (date.indexOf('T') > 0) {
-                if (date.endsWith("GMT")) {
-                    date = date.replace("GMT", "Z");
-                } else if (!date.endsWith("Z")) {
-                    date = date + "Z";
-                }
-            }
-
+        String date = parseDate(xmlr.getElementText());
+        if (date != null) {
             if (name.equals("releasedatetime")) {
                 if (this.embargoed) {
                     map.put("embargoed", date);
@@ -321,7 +313,7 @@ public class PublicationManagementParser extends ApplParser {
         }
     }
 
-    class EditorialTypesParser extends ListParser<String> {
+    private class EditorialTypesParser extends ListParser<String> {
         private boolean embargoed;
 
         public boolean isEmbargoed() {

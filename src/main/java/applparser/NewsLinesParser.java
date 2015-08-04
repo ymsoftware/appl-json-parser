@@ -30,6 +30,7 @@ public class NewsLinesParser extends ApplParser {
     private boolean addKeywordlines;
     private List<Map<String, Object>> persons;
     private boolean addPersons;
+    private boolean summary;
 
     public NewsLinesParser(Map<String, Object> map) {
         this.type = map.containsKey("type") ? (String) map.get("type") : "text";
@@ -40,6 +41,11 @@ public class NewsLinesParser extends ApplParser {
     @Override
     public void parse(String name, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
         switch (name) {
+            case "BodySubHeader":
+                if (!this.summary) {
+                    map.put("summary", xmlr.getElementText());
+                    this.summary = true;
+                }
             case "ExtendedHeadLine":
                 this.extendedHeadline = xmlr.getElementText();
                 break;
