@@ -34,7 +34,7 @@ public class PublicationManagementParser extends ApplParser {
             case "SpecialInstructions":
             case "EditorialId":
             case "Function":
-                parse(name.toLowerCase(), xmlr.getElementText(), map);
+                Helpers.safeAdd(name.toLowerCase(), xmlr.getElementText(), map);
                 break;
             case "ArrivalDateTime":
             case "LastModifiedDateTime":
@@ -97,7 +97,7 @@ public class PublicationManagementParser extends ApplParser {
     }
 
     private void setDate(String name, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
-        String date = parseDate(xmlr.getElementText());
+        String date = Helpers.parseDate(xmlr.getElementText());
         if (date != null) {
             if (name.equals("releasedatetime")) {
                 if (this.embargoed) {
@@ -107,15 +107,15 @@ public class PublicationManagementParser extends ApplParser {
                 }
             }
 
-            parse(name, date, map);
+            Helpers.safeAdd(name, date, map);
         }
     }
 
     private void setFirstCreated(XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
-        Integer year = parseInteger("Year", xmlr);
+        Integer year = Helpers.parseInteger(xmlr.getAttributeValue("", "Year"));
         if (year != null) {
-            Integer month = parseInteger("Month", xmlr);
-            Integer day = parseInteger("Day", xmlr);
+            Integer month = Helpers.parseInteger(xmlr.getAttributeValue("", "Month"));
+            Integer day = Helpers.parseInteger(xmlr.getAttributeValue("", "Day"));
             String value = null;
 
             if (month == null) {

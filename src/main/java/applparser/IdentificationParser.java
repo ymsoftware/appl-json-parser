@@ -15,19 +15,19 @@ public class IdentificationParser extends ApplParser {
             case "ItemId":
             case "RecordId":
             case "CompositeId":
-                parseId(name.toLowerCase(), xmlr.getElementText(), map);
+                Helpers.safeAddStringId(name.toLowerCase(), xmlr.getElementText(), map);
                 break;
             case "CompositionType":
             case "EditorialPriority":
             case "FriendlyKey":
-                parse(name.toLowerCase(), xmlr.getElementText(), map);
+                Helpers.safeAdd(name.toLowerCase(), xmlr.getElementText(), map);
                 break;
             case "Priority":
             case "RecordSequenceNumber":
-                parseInteger(name.toLowerCase(), xmlr.getElementText(), map);
+                Helpers.safeAddInteger(name.toLowerCase(), xmlr.getElementText(), map);
                 break;
             case "MediaType":
-                parseId("type", xmlr.getElementText(), map);
+                Helpers.safeAddStringId("type", xmlr.getElementText(), map);
                 break;
             case "DefaultLanguage":
                 setLanguage(xmlr, map);

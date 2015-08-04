@@ -37,10 +37,10 @@ public class AdministrativeMetadataParser extends ApplParser {
             case "Contributor":
             case "WorkflowStatus":
             case "Workgroup":
-                parse(name.toLowerCase(), xmlr.getElementText(), map);
+                Helpers.safeAdd(name.toLowerCase(), xmlr.getElementText(), map);
                 break;
             case "ContentElement":
-                parse("editorialrole", xmlr.getElementText(), map);
+                Helpers.safeAdd("editorialrole", xmlr.getElementText(), map);
                 break;
             case "Provider":
                 setProvider(name.toLowerCase(), xmlr, map);
@@ -163,7 +163,7 @@ public class AdministrativeMetadataParser extends ApplParser {
         if (text != null && text.length() > 0) provider.put("name", text);
 
         if (provider.size() > 0) {
-            parse(name, provider, map);
+            Helpers.safeAdd(name, provider, map);
         }
     }
 
@@ -213,7 +213,7 @@ public class AdministrativeMetadataParser extends ApplParser {
 
         if (name != null && name.equalsIgnoreCase("alternate")) {
             if (!this.canonicallink) {
-                ObjectParser parser = new SourceMaterialParser(this, true);
+                ObjectParser parser = new SourceMaterialParser(true);
                 Map<String, Object> meta = parser.parse(parent, xmlr);
                 if (meta.size() > 0 && meta.containsKey("url")) {
                     map.put("canonicallink", meta.get("url"));
@@ -228,7 +228,7 @@ public class AdministrativeMetadataParser extends ApplParser {
             String code = xmlr.getAttributeValue("", "Id");
             if (code != null) source.put("code", code);
 
-            ObjectParser parser = new SourceMaterialParser(this, false);
+            ObjectParser parser = new SourceMaterialParser(false);
             Map<String, Object> meta = parser.parse(parent, xmlr);
             if (meta.size() > 0) source.putAll(meta);
 
@@ -308,7 +308,7 @@ public class AdministrativeMetadataParser extends ApplParser {
         }
 
         if (itemcontenttype.size() > 0) {
-            parse(name, itemcontenttype, map);
+            Helpers.safeAdd(name, itemcontenttype, map);
         }
     }
 
@@ -322,7 +322,7 @@ public class AdministrativeMetadataParser extends ApplParser {
         if (text != null && text.length() > 0) provider.put("name", text);
 
         if (provider.size() > 0) {
-            parse(name, provider, map);
+            Helpers.safeAdd(name, provider, map);
         }
     }
 
@@ -347,19 +347,19 @@ public class AdministrativeMetadataParser extends ApplParser {
     private void setRating(XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
         Map<String, Object> rating = new LinkedHashMap<String, Object>();
 
-        Integer value = parseInteger("Value", xmlr);
+        Integer value = Helpers.parseInteger(xmlr.getAttributeValue("", "Value"));
         if (value != null) rating.put("rating", value);
 
-        value = parseInteger("ScaleMin", xmlr);
+        value = Helpers.parseInteger(xmlr.getAttributeValue("", "ScaleMin"));
         if (value != null) rating.put("scalemin", value);
 
-        value = parseInteger("ScaleMax", xmlr);
+        value = Helpers.parseInteger(xmlr.getAttributeValue("", "ScaleMax"));
         if (value != null) rating.put("scalemax", value);
 
         String scaleunit = xmlr.getAttributeValue("", "ScaleUnit");
         if (scaleunit != null) rating.put("scaleunit", scaleunit);
 
-        value = parseInteger("Raters", xmlr);
+        value = Helpers.parseInteger(xmlr.getAttributeValue("", "Raters"));
         if (value != null) rating.put("raters", value);
 
         String ratertype = xmlr.getAttributeValue("", "RaterType");
@@ -424,11 +424,9 @@ public class AdministrativeMetadataParser extends ApplParser {
     }
 
     private class SourceMaterialParser extends ObjectParser {
-        private ApplParser parent;
         private boolean urlOnly;
 
-        public SourceMaterialParser(ApplParser parent, boolean urlOnly) {
-            this.parent = parent;
+        public SourceMaterialParser(boolean urlOnly) {
             this.urlOnly = urlOnly;
         }
 
@@ -438,14 +436,14 @@ public class AdministrativeMetadataParser extends ApplParser {
 
             if (this.urlOnly) {
                 if (name.equalsIgnoreCase("url")) {
-                    this.parent.parse(name.toLowerCase(), xmlr.getElementText(), map);
+                    Helpers.safeAdd(name.toLowerCase(), xmlr.getElementText(), map);
                 }
             } else {
                 switch (name) {
                     case "Type":
                     case "Url":
                     case "PermissionGranted":
-                        this.parent.parse(name.toLowerCase(), xmlr.getElementText(), map);
+                        Helpers.safeAdd(name.toLowerCase(), xmlr.getElementText(), map);
                         break;
                 }
             }

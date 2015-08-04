@@ -72,10 +72,10 @@ public class DocumentParser {
                             parser = new RightsMetadataParser();
                             break;
                         case "DescriptiveMetadata":
-                            parser = new DescriptiveMetadataParser();
+                            parser = new DescriptiveMetadataParser(map);
                             break;
                         case "FilingMetadata":
-                            parser = new FilingMetadataParser();
+                            parser = new FilingMetadataParser(map);
                             break;
                         case "PublicationComponent":
                             parser = new PublicationComponentParser();

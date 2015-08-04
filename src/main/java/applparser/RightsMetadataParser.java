@@ -19,7 +19,7 @@ public class RightsMetadataParser extends ApplParser {
                 setCopyright(name, xmlr, map);
                 break;
             case "UsageRights":
-                ObjectParser parser = new UsageRightsParser(this);
+                ObjectParser parser = new UsageRightsParser();
                 Map<String, Object> right = parser.parse(name, xmlr);
                 if (right.size()>0){
                     if (!this.addUsageRights) {
@@ -97,17 +97,12 @@ public class RightsMetadataParser extends ApplParser {
     }
 
     private class UsageRightsParser extends ObjectParser {
-        private ApplParser parent;
         private List<String> geography;
         private boolean addGeography;
         private List<String> limitations;
         private boolean addLimitations;
         private List<Map<String, Object>> groups;
         private boolean addGroups;
-
-        public UsageRightsParser(ApplParser parent) {
-            this.parent = parent;
-        }
 
         @Override
         void add(Map<String, Object> map, XMLStreamReader xmlr) throws XMLStreamException {
@@ -116,12 +111,12 @@ public class RightsMetadataParser extends ApplParser {
             switch (name) {
                 case "UsageType":
                 case "RightsHolder":
-                    this.parent.parse(name.toLowerCase(), xmlr.getElementText(), map);
+                    Helpers.safeAdd(name.toLowerCase(), xmlr.getElementText(), map);
                     break;
                 case "StartDate":
                 case "EndDate":
-                    String date = parseDate(xmlr.getElementText());
-                    this.parent.parse(name.toLowerCase(), date, map);
+                    String date = Helpers.parseDate(xmlr.getElementText());
+                    Helpers.safeAdd(name.toLowerCase(), date, map);
                     break;
                 case "Geography":
                     String geo = xmlr.getElementText();

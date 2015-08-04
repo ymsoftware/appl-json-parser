@@ -63,7 +63,7 @@ public class NewsLinesParser extends ApplParser {
             case "SeriesLine":
             case "OutCue":
             case "LocationLine":
-                parse(name.toLowerCase(), xmlr.getElementText(), map);
+                Helpers.safeAdd(name.toLowerCase(), xmlr.getElementText(), map);
                 break;
             case "ByLine":
                 setBylines(name, xmlr, map);
