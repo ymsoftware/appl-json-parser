@@ -9,9 +9,8 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamReader;
 import java.io.StringReader;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * Created by ymetelkin on 7/27/15.
@@ -88,7 +87,6 @@ public class DocumentParser {
                     }
                 } else if (eventType == XMLStreamReader.END_ELEMENT) {
                     switch (xmlr.getLocalName()) {
-                        case "Publication":
                         case "Identification":
                         case "PublicationManagement":
                         case "NewsLines":
@@ -100,6 +98,18 @@ public class DocumentParser {
                             parser.cleanup(map);
                             parser = null;
                             break;
+                        case "Publication":
+                            if (map.containsKey("addConsumerReady")){
+                                if (map.containsKey("signals")) {
+                                    List<String> signals = (List<String>) map.get("signals");
+                                    signals.add("consumerready");
+                                    map.replace("signals",signals);
+                                } else {
+                                    map.put("signals", new String[]{"consumerready"});
+                                }
+
+                                map.remove("addConsumerReady");
+                            }
                     }
                 }
             }

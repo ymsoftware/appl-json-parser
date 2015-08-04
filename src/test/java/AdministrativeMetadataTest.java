@@ -96,4 +96,208 @@ public class AdministrativeMetadataTest {
         assertEquals("YM", next.get("name").asText());
         assertEquals("pg", next.get("permissiongranted").asText());
     }
+
+    @Test
+    public void testArrays() throws IOException {
+        String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
+                + "<AdministrativeMetadata>"
+                + "<TransmissionSource>T1</TransmissionSource>"
+                + "<TransmissionSource>T2</TransmissionSource>"
+                + "<TransmissionSource>T1</TransmissionSource>"
+                + "<ProductSource>P1</ProductSource>"
+                + "<ProductSource>P2</ProductSource>"
+                + "<ProductSource>P2</ProductSource>"
+                + "<DistributionChannel>DC1</DistributionChannel>"
+                + "<DistributionChannel>DC2</DistributionChannel>"
+                + "<DistributionChannel>DC1</DistributionChannel>"
+                + "</AdministrativeMetadata>"
+                + "</Publication>";
+
+        DocumentParser parser = new DocumentParser();
+        String json = parser.parse(appl);
+
+        ObjectMapper m = new ObjectMapper();
+        JsonNode rootNode = m.readTree(json);
+        JsonNode testNode = rootNode.path("transmissionsources");
+        assertEquals(true, testNode.isArray());
+        assertEquals(2, testNode.size());
+        assertEquals("T1", testNode.elements().next().asText());
+
+        testNode = rootNode.path("productsources");
+        assertEquals(true, testNode.isArray());
+        assertEquals(2, testNode.size());
+        assertEquals("P1", testNode.elements().next().asText());
+
+        testNode = rootNode.path("distributionchannels");
+        assertEquals(true, testNode.isArray());
+        assertEquals(2, testNode.size());
+        assertEquals("DC1", testNode.elements().next().asText());
+    }
+
+    @Test
+    public void testInPackages() throws IOException {
+        String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
+                + "<AdministrativeMetadata>"
+                + "<InPackage>a</InPackage>"
+                + "<InPackage>b c</InPackage>"
+                + "<InPackage>c d</InPackage>"
+                + "</AdministrativeMetadata>"
+                + "</Publication>";
+
+        DocumentParser parser = new DocumentParser();
+        String json = parser.parse(appl);
+
+        ObjectMapper m = new ObjectMapper();
+        JsonNode rootNode = m.readTree(json);
+        JsonNode testNode = rootNode.path("inpackages");
+        assertEquals(true, testNode.isArray());
+        assertEquals(4, testNode.size());
+        assertEquals("a", testNode.elements().next().asText());
+    }
+
+    @Test
+    public void testRatings() throws IOException {
+        String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
+                + "<AdministrativeMetadata>"
+                + "<Rating Value=\"10\" ScaleMin=\"1\" ScaleMax=\"10\" ScaleUnit=\"digit\" Raters=\"5\" RaterType=\"expert\" Creator=\"creator\" />"
+                + "<Rating Value=\"7\" ScaleMin=\"1\" ScaleMax=\"10\" ScaleUnit=\"digit\" Raters=\"15\" RaterType=\"expert\" />"
+                + "</AdministrativeMetadata>"
+                + "</Publication>";
+
+        DocumentParser parser = new DocumentParser();
+        String json = parser.parse(appl);
+
+        ObjectMapper m = new ObjectMapper();
+        JsonNode rootNode = m.readTree(json);
+        JsonNode testNode = rootNode.path("ratings");
+        assertEquals(true, testNode.isArray());
+        assertEquals(2, testNode.size());
+
+        Iterator<JsonNode> elements = testNode.elements();
+
+        JsonNode next = elements.next();
+        assertEquals(10, next.get("rating").asInt());
+        assertEquals(1, next.get("scalemin").asInt());
+        assertEquals(10, next.get("scalemax").asInt());
+        assertEquals(5, next.get("raters").asInt());
+        assertEquals("expert", next.get("ratertype").asText());
+        assertEquals("creator", next.get("creator").asText());
+
+        next = elements.next();
+        assertEquals(7, next.get("rating").asInt());
+    }
+
+    @Test
+    public void testSignals() throws IOException {
+        String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
+                + "<AdministrativeMetadata>"
+                + "<Reach>reach</Reach>"
+                + "<Reach>unknown</Reach>"
+                + "<Signal>S1</Signal>"
+                + "<Signal>S2</Signal>"
+                + "</AdministrativeMetadata>"
+                + "</Publication>";
+
+        DocumentParser parser = new DocumentParser();
+        String json = parser.parse(appl);
+
+        ObjectMapper m = new ObjectMapper();
+        JsonNode rootNode = m.readTree(json);
+        JsonNode testNode = rootNode.path("signals");
+        assertEquals(true, testNode.isArray());
+        assertEquals(4, testNode.size());
+
+        Iterator<JsonNode> elements = testNode.elements();
+
+        JsonNode next = elements.next();
+        assertEquals("reach", next.asText());
+
+        next = elements.next();
+        assertEquals("S1", next.asText());
+
+        next = elements.next();
+        assertEquals("S2", next.asText());
+
+        next = elements.next();
+        assertEquals("consumerready", next.asText());
+
+        appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
+                + "<AdministrativeMetadata>"
+                + "<Reach>reach</Reach>"
+                + "<Reach>unknown</Reach>"
+                + "<Signal>S1</Signal>"
+                + "<Signal>S2</Signal>"
+                + "<ConsumerReady>S2</ConsumerReady>"
+                + "</AdministrativeMetadata>"
+                + "</Publication>";
+
+        parser = new DocumentParser();
+        json = parser.parse(appl);
+
+        m = new ObjectMapper();
+        rootNode = m.readTree(json);
+        testNode = rootNode.path("signals");
+        assertEquals(true, testNode.isArray());
+        assertEquals(3, testNode.size());
+
+        elements = testNode.elements();
+
+        next = elements.next();
+        assertEquals("reach", next.asText());
+
+        next = elements.next();
+        assertEquals("S1", next.asText());
+
+        next = elements.next();
+        assertEquals("S2", next.asText());
+
+        appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
+                + "<PublicationManagement>"
+                + "<ExplicitWarning>1</ExplicitWarning>"
+                + "<IsDigitized>false</IsDigitized>"
+                + "</PublicationManagement>"
+                + "<AdministrativeMetadata>"
+                + "<Reach>reach</Reach>"
+                + "<Reach>unknown</Reach>"
+                + "<Signal>S1</Signal>"
+                + "<Signal>S2</Signal>"
+                + "<ConsumerReady>yes</ConsumerReady>"
+                + "</AdministrativeMetadata>"
+                + "</Publication>";
+
+        parser = new DocumentParser();
+        json = parser.parse(appl);
+
+        m = new ObjectMapper();
+        rootNode = m.readTree(json);
+        testNode = rootNode.path("signals");
+        assertEquals(true, testNode.isArray());
+        assertEquals(6, testNode.size());
+
+        elements = testNode.elements();
+
+        next = elements.next();
+        assertEquals("explicitcontent", next.asText());
+
+        next = elements.next();
+        assertEquals("isnotdigitized", next.asText());
+
+        next = elements.next();
+        assertEquals("reach", next.asText());
+
+        next = elements.next();
+        assertEquals("S1", next.asText());
+
+        next = elements.next();
+        assertEquals("S2", next.asText());
+
+        next = elements.next();
+        assertEquals("consumerready", next.asText());
+    }
 }

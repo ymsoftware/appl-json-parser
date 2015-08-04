@@ -9,6 +9,7 @@ import java.util.Map;
  */
 public class FilingMetadataParser extends ApplParser {
     //title
+    //addConsumerReady
 
     @Override
     public void parse(String name, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
