@@ -22,6 +22,16 @@ public class DescriptiveMetadataParser extends ApplParser {
     private boolean addSubjects;
     private String fixtureName;
     private Integer fixtureCode;
+    private Map<String, Map<String, Object>> events;
+    private boolean addEvents;
+    private Map<String, Map<String, Object>> organizations;
+    private boolean addOrganizations;
+    private Map<String, Map<String, Object>> companies;
+    private boolean addCompanies;
+    private Map<String, Map<String, Object>> symbols;
+    private Map<String, Map<String, Object>> industries;
+    private List<Map<String, Object>> tickers;
+    private List<Map<String, Object>> exchanges;
     private boolean calculate;
 
     public DescriptiveMetadataParser(Map<String, Object> map) {
@@ -45,13 +55,14 @@ public class DescriptiveMetadataParser extends ApplParser {
                 String authority = xmlr.getAttributeValue("", "Authority");
                 if (authority != null) {
                     setGenerator(authority, xmlr, map);
-                    iterateOccurrences(name, authority, xmlr, map, (a, x, m) -> setSubjectClassification(authority, xmlr, map));
+                    iterateOccurrences(name, authority, xmlr, map, this::setSubjectClassification);
                 }
                 break;
             case "EntityClassification":
                 authority = xmlr.getAttributeValue("", "Authority");
                 if (authority != null) {
                     setGenerator(authority, xmlr, map);
+                    iterateOccurrences(name, authority, xmlr, map, this::setEntityClassification);
                 }
                 break;
             case "AudienceClassification":
@@ -100,6 +111,18 @@ public class DescriptiveMetadataParser extends ApplParser {
             fixture.put("code", String.valueOf(this.fixtureCode));
             if (this.fixtureName != null) fixture.put("name", this.fixtureName);
             map.put("fixture", fixture);
+        }
+        if (this.addEvents) {
+            map.replace("events", null, this.events.values());
+            this.addEvents = false;
+        }
+        if (this.addOrganizations) {
+            map.replace("organizations", null, this.organizations.values());
+            this.addOrganizations = false;
+        }
+        if (this.addCompanies) {
+            map.replace("companies", null, this.companies.values());
+            this.addCompanies = false;
         }
 
         if (!this.calculate) {
@@ -182,7 +205,7 @@ public class DescriptiveMetadataParser extends ApplParser {
                 this.alertcategories.add(code);
             }
         } else if (authority.equalsIgnoreCase("AP Subject")) {
-            if (this.subjects==null) this.subjects = new LinkedHashMap<String, Map<String, Object>>();
+            if (this.subjects == null) this.subjects = new LinkedHashMap<String, Map<String, Object>>();
             Map<String, Object> subject = setSubject(code, name, this.subjects, xmlr, map);
             if (subject != null && !this.addSubjects) {
                 this.addSubjects = true;
@@ -203,6 +226,53 @@ public class DescriptiveMetadataParser extends ApplParser {
         }
     }
 
+    private void setEntityClassification(String authority, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
+        String code = xmlr.getAttributeValue("", "Id");
+        String name = xmlr.getAttributeValue("", "Value");
+        if (code != null && name != null) {
+            if (authority.equalsIgnoreCase("AP Event")) {
+                Map<String, Object> event = Helpers.getCodeNameObject(code, name);
+                if (!this.addEvents) {
+                    this.addEvents = true;
+                    this.events = new LinkedHashMap<String, Map<String, Object>>();
+                    map.put("events", null);
+                }
+
+                if (this.events.containsKey(code)) {
+                    this.events.replace(code, event);
+                } else {
+                    this.events.put(code, event);
+                }
+            } else {
+                String system = xmlr.getAttributeValue("", "System");
+
+                if (authority.equalsIgnoreCase("AP Party")) {
+
+                } else if (authority.equalsIgnoreCase("AP Organization")) {
+                    if (this.organizations == null)
+                        this.organizations = new LinkedHashMap<String, Map<String, Object>>();
+                    Map<String, Object> subject = setSubject(code, name, this.organizations, xmlr, map);
+                    if (subject != null && !this.addOrganizations) {
+                        this.addOrganizations = true;
+                        map.put("organizations", null);
+                    }
+                } else if (authority.equalsIgnoreCase("AP Company")) {
+                    if (this.companies == null)
+                        this.companies = new LinkedHashMap<String, Map<String, Object>>();
+                    Map<String, Object> company = setCompany(code, name, system, this.companies, xmlr, map);
+                    if (company != null && !this.addCompanies) {
+                        this.addCompanies = true;
+                        map.put("companies", null);
+                    }
+                } else if (authority.equalsIgnoreCase("AP Geography")
+                        || authority.equalsIgnoreCase("AP Country")
+                        || authority.equalsIgnoreCase("AP Region")) {
+
+                }
+            }
+        }
+    }
+
     private Map<String, Object> setSubject(String code, String name, Map<String, Map<String, Object>> subjects, XMLStreamReader xmlr, Map<String, Object> map) {
         Map<String, Object> subject = Helpers.getCodeNameObject(code, name);
 
@@ -212,8 +282,10 @@ public class DescriptiveMetadataParser extends ApplParser {
             String key = String.format("%s-%s", code, name);
             boolean exists = subjects.containsKey(key);
             if (exists) {
-                subject = (Map<String, Object>) this.subjects.get(key);
+                subject = (Map<String, Object>) subjects.get(key);
             }
+
+            Helpers.addSchemeAndCreatorToMap(system, subject);
 
             String rel = null;
             if (system != null && system.equalsIgnoreCase("RTE")) {
@@ -227,7 +299,6 @@ public class DescriptiveMetadataParser extends ApplParser {
             }
 
             Helpers.addStringToMapList(rel, "rels", subject);
-            Helpers.addSchemeAndCreatorToMap(system, subject);
             Helpers.addStringToMapList(xmlr.getAttributeValue("", "ParentId"), "parentids", subject);
 
             if (exists) {
@@ -246,6 +317,106 @@ public class DescriptiveMetadataParser extends ApplParser {
         return subject;
     }
 
+    private Map<String, Object> setCompany(String code, String name, String system, Map<String, Map<String, Object>> companies, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
+        Map<String, Object> company = Helpers.getCodeNameObject(code, name);
+
+        String key = String.format("%s-%s", code, name);
+        boolean exists = companies.containsKey(key);
+        if (exists) {
+            company = (Map<String, Object>) companies.get(key);
+        }
+
+        Helpers.addSchemeAndCreatorToMap(system, company);
+
+        if (!exists) {
+            company.put("rels", new String[]{"direct"});
+        }
+
+        this.symbols = new HashMap<String, Map<String, Object>>();
+        this.industries = new HashMap<String, Map<String, Object>>();
+        this.tickers = new ArrayList<Map<String, Object>>();
+        this.exchanges = new ArrayList<Map<String, Object>>();
+        iterateOccurrenceProperties(xmlr, map, (n, v, x, m) -> setCompanyProperties(n, v, x, m));
+
+        if (this.tickers.size() > 0 && this.exchanges.size() > 0) {
+            for (Map<String, Object> ticker : this.tickers) {
+                String parentid = (String) ticker.get("parentid");
+                Map<String, Object> exchange = this.exchanges.get(0);
+                if (parentid != null) {
+                    for (Map<String, Object> exch : this.exchanges) {
+                        if (parentid.equalsIgnoreCase((String) exch.get("id"))) {
+                            exchange = exch;
+                            break;
+                        }
+                    }
+                }
+
+                String e = ((String) exchange.get("value")).toUpperCase();
+                String t = ((String) ticker.get("value")).toUpperCase();
+                String k = String.format("%s:%s", e, t);
+                if (!this.symbols.containsKey(k)) {
+                    Map<String, Object> symbol = new LinkedHashMap<String, Object>();
+                    symbol.put("instrument", k);
+                    symbol.put("exchange", e);
+                    symbol.put("ticker", t);
+                    this.symbols.put(key, symbol);
+                }
+            }
+        }
+
+        if (this.symbols.size() > 0) {
+            company.put("symbols", this.symbols);
+        }
+        if (this.industries.size() > 0) {
+            company.put("industries", this.industries);
+        }
+
+        if (exists) {
+            companies.replace(key, company);
+        } else {
+            companies.put(key, company);
+        }
+
+        return company;
+    }
+
+    private void setCompanyProperties(String name, String value, XMLStreamReader xmlr, Map<String, Object> map) {
+        if (name.equalsIgnoreCase("Instrument")) {
+            String key = value.toUpperCase();
+            String[] tokens = key.split(":");
+            if (tokens.length > 1 && !this.symbols.containsKey(key)) {
+                Map<String, Object> symbol = new LinkedHashMap<String, Object>();
+                symbol.put("instrument", key);
+                symbol.put("exchange", tokens[0]);
+                symbol.put("ticker", tokens[1]);
+                this.symbols.put(key, symbol);
+            }
+        } else if (name.equalsIgnoreCase("PrimaryTicker")
+                || name.equalsIgnoreCase("Ticker")) {
+            String parentid = xmlr.getAttributeValue("", "ParentId");
+            Map<String, Object> ticker = new LinkedHashMap<String, Object>();
+            ticker.put("parentid", parentid);
+            ticker.put("value", value);
+            this.tickers.add(ticker);
+        } else if (name.equalsIgnoreCase("APIndustry")) {
+            String id = xmlr.getAttributeValue("", "Id");
+            if (id != null && !this.industries.containsKey(id)) {
+                Map<String, Object> industry = new LinkedHashMap<String, Object>();
+                industry.put("code", id);
+                industry.put("name", value);
+                this.industries.put(id, industry);
+            }
+        } else if (name.equalsIgnoreCase("Exchange")) {
+            String id = xmlr.getAttributeValue("", "Id");
+            if (id != null) {
+                Map<String, Object> exchange = new LinkedHashMap<String, Object>();
+                exchange.put("id", id);
+                exchange.put("value", value);
+                this.exchanges.add(exchange);
+            }
+        }
+    }
+
     private void iterateOccurrences(String parentName, String authority, XMLStreamReader xmlr, Map<String, Object> map, OccurrenceParser action) throws XMLStreamException {
         boolean end = false;
 
@@ -261,6 +432,31 @@ public class DescriptiveMetadataParser extends ApplParser {
 
             } else if (eventType == XMLStreamReader.END_ELEMENT) {
                 if (xmlr.getLocalName() == parentName) {
+                    end = true;
+                }
+            }
+        }
+    }
+
+    private void iterateOccurrenceProperties(XMLStreamReader xmlr, Map<String, Object> map, OccurrencePropertyParser action) throws XMLStreamException {
+        boolean end = false;
+
+        while (!end && xmlr.hasNext()) {
+            xmlr.next();
+
+            int eventType = xmlr.getEventType();
+
+            if (eventType == XMLStreamReader.START_ELEMENT) {
+                if (xmlr.getLocalName().equals("Property")) {
+                    String name = xmlr.getAttributeValue("", "Name");
+                    String value = xmlr.getAttributeValue("", "Value");
+                    if (name != null && value != null) {
+                        action.parse(name, value, xmlr, map);
+                    }
+                }
+
+            } else if (eventType == XMLStreamReader.END_ELEMENT) {
+                if (xmlr.getLocalName() == "Occurrence") {
                     end = true;
                 }
             }
@@ -311,6 +507,11 @@ public class DescriptiveMetadataParser extends ApplParser {
 
     @FunctionalInterface
     private interface OccurrenceParser {
-        void parse(String authority, XMLStreamReader xmlr, Map<String, Object> map);
+        void parse(String authority, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException;
+    }
+
+    @FunctionalInterface
+    private interface OccurrencePropertyParser {
+        void parse(String name, String value, XMLStreamReader xmlr, Map<String, Object> map);
     }
 }
