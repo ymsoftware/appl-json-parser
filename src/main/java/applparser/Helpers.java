@@ -2,8 +2,7 @@ package applparser;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by ymetelkin on 8/4/15.
@@ -78,5 +77,50 @@ public class Helpers {
         }
 
         return null;
+    }
+
+    public static Map<String, Object> getCodeNameObject(String code, String name) {
+        boolean hasCode = code != null;
+        boolean hasName = name != null;
+        if (hasCode || hasName) {
+            Map<String, Object> map = new LinkedHashMap<String, Object>();
+            if (hasCode) map.put("code", code);
+            if (hasName) map.put("name", name);
+            return map;
+        } else {
+            return null;
+        }
+    }
+
+    public static void addStringToMapList(String value, String key, Map<String, Object> map) {
+        if (value != null) {
+            boolean hasRels = map.containsKey(key);
+            List<String> rels = hasRels ? (List<String>) map.get(key) : new ArrayList<String>();
+            if (!rels.contains(value)) {
+                rels.add(value);
+
+                if (hasRels) {
+                    map.replace(key, rels);
+                } else {
+                    map.put(key, rels);
+                }
+            }
+        }
+    }
+
+    public static void addSchemeAndCreatorToMap(String system, Map<String, Object> map) {
+        if (!map.containsKey("scheme")) {
+            map.put("scheme", "http://cv.ap.org/id/");
+        }
+
+        if (system != null) {
+            if (map.containsKey("creator")) {
+                if (system.equalsIgnoreCase("editorial")) {
+                    map.replace("creator", system);
+                }
+            } else {
+                map.put("creator", system);
+            }
+        }
     }
 }

@@ -313,16 +313,12 @@ public class AdministrativeMetadataParser extends ApplParser {
     }
 
     private void setFixture(String name, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
-        Map<String, Object> provider = new LinkedHashMap<String, Object>();
-
         String code = xmlr.getAttributeValue("", "Id");
-        if (code != null) provider.put("code", code);
-
         String text = xmlr.getElementText();
-        if (text != null && text.length() > 0) provider.put("name", text);
+        Map<String, Object> fixture = Helpers.getCodeNameObject(code, text);
 
-        if (provider.size() > 0) {
-            Helpers.safeAdd(name, provider, map);
+        if (fixture != null) {
+            Helpers.safeAdd(name, fixture, map);
         }
     }
 
