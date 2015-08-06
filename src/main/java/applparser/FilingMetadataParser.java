@@ -11,6 +11,7 @@ public class FilingMetadataParser extends ApplParser {
     private boolean calculate;
 
     //title
+    //geo
 
     public FilingMetadataParser(Map<String, Object> map) {
         this.calculate = map.containsKey("addConsumerReady");

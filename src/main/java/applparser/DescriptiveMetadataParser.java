@@ -49,6 +49,9 @@ public class DescriptiveMetadataParser extends ApplParser {
     private Number lat;
     private Number lon;
     private boolean calculate;
+    private Map<String, Map<String, Object>> audiences;
+    private boolean addAudiences;
+    private boolean geo;
 
     public DescriptiveMetadataParser(Map<String, Object> map) {
         this.calculate = map.containsKey("addConsumerReady");
@@ -86,7 +89,11 @@ public class DescriptiveMetadataParser extends ApplParser {
                 }
                 break;
             case "AudienceClassification":
-                //classification,function,classification
+                authority = xmlr.getAttributeValue("", "Authority");
+                if (authority != null) {
+                    String system = xmlr.getAttributeValue("", "System");
+                    iterateOccurrences(name, system, authority, xmlr, map, this::setAudienceClassification);
+                }
                 break;
             case "SalesClassification":
                 //classification,function,classification
@@ -151,6 +158,10 @@ public class DescriptiveMetadataParser extends ApplParser {
         if (this.addPlaces) {
             map.replace("places", null, this.places.values());
             this.addPlaces = false;
+        }
+        if (this.addAudiences) {
+            map.replace("audiences", null, this.audiences.values());
+            this.addAudiences = false;
         }
 
         if (!this.calculate) {
@@ -312,6 +323,52 @@ public class DescriptiveMetadataParser extends ApplParser {
                         this.addPlaces = true;
                         map.put("places", null);
                     }
+                }
+            }
+        }
+    }
+
+    private void setAudienceClassification(String authority, String system, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
+        if (authority.equalsIgnoreCase("AP Audience") && system != null && system.equalsIgnoreCase("Editorial")) {
+            String code = xmlr.getAttributeValue("", "Id");
+            String name = xmlr.getAttributeValue("", "Value");
+            Map<String, Object> audience = Helpers.getCodeNameObject(code, name);
+            if (audience != null) {
+                if (!this.addAudiences) {
+                    this.addAudiences = true;
+                    this.audiences = new LinkedHashMap<String, Map<String, Object>>();
+                    map.put("audiences", null);
+                }
+
+                String key = code == null ? "" : code;
+                if (!this.audiences.containsKey(key)) {
+                    while (xmlr.hasNext()) {
+                        xmlr.next();
+
+                        int eventType = xmlr.getEventType();
+
+                        if (eventType == XMLStreamReader.START_ELEMENT) {
+                            if (xmlr.getLocalName().equals("Property")) {
+                                String value = xmlr.getAttributeValue("", "Value");
+                                if (value != null) {
+                                    audience.put("type", value);
+
+                                    if (!this.geo && value.equalsIgnoreCase("AUDGEOGRAPHY")) {
+                                        this.geo = true;
+                                    }
+
+                                    break;
+                                }
+                            }
+
+                        } else if (eventType == XMLStreamReader.END_ELEMENT) {
+                            if (xmlr.getLocalName() == "Occurrence") {
+                                break;
+                            }
+                        }
+                    }
+
+                    this.audiences.put(key, audience);
                 }
             }
         }
@@ -672,6 +729,24 @@ public class DescriptiveMetadataParser extends ApplParser {
                     this.exchanges.put(this.companyKey, new ArrayList<Map<String, Object>>());
                 }
                 this.exchanges.get(this.companyKey).add(exchange);
+            }
+        }
+    }
+
+    private void setAudienceProperties(String name, String value, XMLStreamReader xmlr, Map<String, Object> map) {
+        if (name.equalsIgnoreCase("LocationType")) {
+            if (this.locationtype == null) {
+                String id = xmlr.getAttributeValue("", "Id");
+                this.locationtype = Helpers.getCodeNameObject(id, value);
+            }
+
+        } else if (name.equalsIgnoreCase("CentroidLongitude")) {
+            if (this.lon == null) {
+                this.lon = Helpers.parseNumber(value);
+            }
+        } else if (name.equalsIgnoreCase("CentroidLatitude")) {
+            if (this.lat == null) {
+                this.lat = Helpers.parseNumber(value);
             }
         }
     }

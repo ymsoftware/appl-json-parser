@@ -394,4 +394,45 @@ public class DescriptiveMetadataTest {
         assertEquals(true, array.isArray());
         assertEquals(2, array.size());
     }
+
+    @Test
+    public void testAudiences() throws IOException {
+        String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
+                + "<DescriptiveMetadata>"
+                + "<AudienceClassification Authority=\"AP Audience\" System=\"Editorial\">"
+                + "<Occurrence Id=\"a1\" Value=\"Online\">"
+                + "<Property Name=\"AudienceType\" Value=\"AUDPLATFORM\" />"
+                + "<Property Name=\"AudienceType\" Value=\"V2\" />"
+                + "</Occurrence>"
+                + "</AudienceClassification>"
+                + "<AudienceClassification Authority=\"AP Audience\" System=\"Editorial\">"
+                + "<Occurrence Id=\"a2\" Value=\"Online\" />"
+                + "</AudienceClassification>"
+                + "<AudienceClassification Authority=\"AP Audience\" System=\"Editorial\">"
+                + "<Occurrence Id=\"a1\" Value=\"Online\" />"
+                + "</AudienceClassification>"
+                + "<AudienceClassification Authority=\"AP Audience\">"
+                + "<Occurrence Id=\"a1\" Value=\"Online\" Name=\"AudienceType\" />"
+                + "</AudienceClassification>"
+                + "</DescriptiveMetadata>"
+                + "</Publication>";
+
+
+        DocumentParser parser = new DocumentParser();
+        String json = parser.parse(appl);
+
+        ObjectMapper m = new ObjectMapper();
+        JsonNode rootNode = m.readTree(json);
+        JsonNode testNode = rootNode.path("audiences");
+        assertEquals(true, testNode.isArray());
+        assertEquals(2, testNode.size());
+
+        Iterator<JsonNode> elements = testNode.elements();
+
+        JsonNode next = elements.next();
+        assertEquals("Online", next.get("name").asText());
+        assertEquals("a1", next.get("code").asText());
+        assertEquals("AUDPLATFORM", next.get("type").asText());
+    }
 }
