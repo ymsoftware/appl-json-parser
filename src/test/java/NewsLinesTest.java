@@ -73,7 +73,7 @@ public class NewsLinesTest {
         assertEquals(2, testNode.size());
         assertEquals("KeywordLine 1", testNode.elements().next().asText());
 
-        testNode = rootNode.path("persons");
+        testNode = rootNode.path("person");
         assertEquals(true, testNode.isArray());
         assertEquals(1, testNode.size());
         assertEquals("YM", testNode.elements().next().get("name").asText());

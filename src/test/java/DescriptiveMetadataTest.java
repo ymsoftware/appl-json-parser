@@ -228,6 +228,24 @@ public class DescriptiveMetadataTest {
                 + "<Property Name=\"Exchange\" Value=\"RXE\" Id=\"c1\" />"
                 + "</Occurrence>"
                 + "</EntityClassification>"
+                + "<EntityClassification Authority=\"AP Party\" System=\"Teragram\">"
+                + "<Occurrence Id=\"a1\" Value=\"Barack Obama\">"
+                + "<Property Id=\"a2\" Value=\"PERSON_FEATURED\" Name=\"PartyType\"/>"
+                + "<Property Id=\"a3\" Value=\"PERSON\" Name=\"PartyType\"/>"
+                + "<Property Id=\"a4\" Value=\"POLITICIAN\" Name=\"PartyType\"/>"
+                + "</Occurrence>"
+                + "</EntityClassification>"
+                + "<EntityClassification Authority=\"AP Party\" System=\"Teragram\">"
+                + "<Occurrence Id=\"a1\" Value=\"Lionel Messi\">"
+                + "<Property Id=\"a2\" Value=\"PROFESSIONAL_ATHLETE\" Name=\"PartyType\"/>"
+                + "<Property Id=\"a3\" Value=\"SPORT FIGURE\" Name=\"PartyType\"/>"
+                + "<Property Id=\"a4\" Value=\"PERSON\" Name=\"PartyType\"/>"
+                + "<Property Id=\"a5\" Value=\"FC Barcelona\" Name=\"Team\"/>"
+                + "<Property Id=\"a6\" Value=\"Barca\" Name=\"ExtId\"/>"
+                + "<Property Id=\"a6\" Value=\"Catalonia\" Name=\"AssociatedState\"/>"
+                + "<Property Id=\"a6\" Value=\"La Liga\" Name=\"AssociatedEvent\"/>"
+                + "</Occurrence>"
+                + "</EntityClassification>"
                 + "</DescriptiveMetadata>"
                 + "</Publication>";
 
@@ -261,7 +279,7 @@ public class DescriptiveMetadataTest {
         assertEquals(true, array.isArray());
         assertEquals(1, array.size());
         assertEquals("direct", array.elements().next().asText());
-        array=next.get("parentids");
+        array = next.get("parentids");
         assertEquals(true, array.isArray());
         assertEquals(1, array.size());
         assertEquals("p1", array.elements().next().asText());
@@ -299,5 +317,53 @@ public class DescriptiveMetadataTest {
         assertEquals(true, array.isArray());
         assertEquals(2, array.size());
         assertEquals("Software", array.elements().next().get("name").asText());
+
+        testNode = rootNode.path("persons");
+        assertEquals(true, testNode.isArray());
+        assertEquals(2, testNode.size());
+
+        elements = testNode.elements();
+
+        next = elements.next();
+        assertEquals("Barack Obama", next.get("name").asText());
+        assertEquals("a1", next.get("code").asText());
+        assertEquals("Editorial", next.get("creator").asText());
+        array = next.get("rels");
+        assertEquals(true, array.isArray());
+        assertEquals(2, array.size());
+        assertEquals("direct", array.elements().next().asText());
+        array = next.get("types");
+        assertEquals(true, array.isArray());
+        assertEquals(2, array.size());
+        assertEquals("PERSON", array.elements().next().asText());
+
+        next = elements.next();
+        assertEquals("Lionel Messi", next.get("name").asText());
+        assertEquals("a1", next.get("code").asText());
+        assertEquals("Teragram", next.get("creator").asText());
+        array = next.get("rels");
+        assertEquals(true, array.isArray());
+        assertEquals(1, array.size());
+        assertEquals("direct", array.elements().next().asText());
+        array = next.get("types");
+        assertEquals(true, array.isArray());
+        assertEquals(3, array.size());
+        assertEquals("PROFESSIONAL_ATHLETE", array.elements().next().asText());
+        array = next.get("teams");
+        assertEquals(true, array.isArray());
+        assertEquals(1, array.size());
+        assertEquals("FC Barcelona", array.elements().next().get("name").asText());
+        array = next.get("extids");
+        assertEquals(true, array.isArray());
+        assertEquals(1, array.size());
+        assertEquals("Barca", array.elements().next().asText());
+        array = next.get("associatedstates");
+        assertEquals(true, array.isArray());
+        assertEquals(1, array.size());
+        assertEquals("Catalonia", array.elements().next().get("name").asText());
+        array = next.get("associatedevents");
+        assertEquals(true, array.isArray());
+        assertEquals(1, array.size());
+        assertEquals("La Liga", array.elements().next().get("name").asText());
     }
 }

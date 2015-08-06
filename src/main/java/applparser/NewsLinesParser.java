@@ -28,8 +28,8 @@ public class NewsLinesParser extends ApplParser {
     private boolean addOverlines;
     private List<String> keywordlines;
     private boolean addKeywordlines;
-    private List<Map<String, Object>> persons;
-    private boolean addPersons;
+    private List<Map<String, Object>> person;
+    private boolean addPerson;
     private boolean summary;
 
     public NewsLinesParser(Map<String, Object> map) {
@@ -89,7 +89,7 @@ public class NewsLinesParser extends ApplParser {
                 setKeywordlines(name, xmlr, map);
                 break;
             case "NameLine":
-                setPersons(name, xmlr, map);
+                setPerson(name, xmlr, map);
                 break;
         }
     }
@@ -127,9 +127,9 @@ public class NewsLinesParser extends ApplParser {
             this.addKeywordlines = false;
         }
 
-        if (this.addPersons) {
-            map.replace("persons", null, this.persons);
-            this.addPersons = false;
+        if (this.addPerson) {
+            map.replace("person", null, this.person);
+            this.addPerson = false;
         }
     }
 
@@ -334,18 +334,18 @@ public class NewsLinesParser extends ApplParser {
         }
     }
 
-    private void setPersons(String name, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
-        if (this.persons == null) {
-            this.persons = new ArrayList<Map<String, Object>>();
+    private void setPerson(String name, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
+        if (this.person == null) {
+            this.person = new ArrayList<Map<String, Object>>();
         }
 
         String parametric = xmlr.getAttributeValue("", "Parametric");
         if (parametric != null && parametric.equalsIgnoreCase("PERSON_FEATURED")) {
             String text = xmlr.getElementText();
             if (text != null) {
-                if (!this.addPersons) {
-                    map.put("persons", null);
-                    this.addPersons = true;
+                if (!this.addPerson) {
+                    map.put("person", null);
+                    this.addPerson = true;
                 }
 
                 Map<String, Object> person = new LinkedHashMap<String, Object>();
@@ -353,7 +353,7 @@ public class NewsLinesParser extends ApplParser {
                 person.put("rel", new String[]{"personfeatured"});
                 person.put("creator", "Editorial");
 
-                this.persons.add(person);
+                this.person.add(person);
             }
         }
     }

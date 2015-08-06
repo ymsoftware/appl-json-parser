@@ -94,15 +94,28 @@ public class Helpers {
 
     public static void addStringToMapList(String value, String key, Map<String, Object> map) {
         if (value != null) {
-            boolean hasRels = map.containsKey(key);
-            List<String> rels = hasRels ? (List<String>) map.get(key) : new ArrayList<String>();
-            if (!rels.contains(value)) {
-                rels.add(value);
+            if (!map.containsKey(key)) {
+                map.put(key, new ArrayList<String>());
+            }
 
-                if (hasRels) {
-                    map.replace(key, rels);
-                } else {
-                    map.put(key, rels);
+            List<String> list = (List<String>)map.get(key);
+            if (!list.contains(value)) {
+                list.add(value);
+            }
+        }
+    }
+
+    public static void addListToMapList(List<String> values, String key, Map<String, Object> map) {
+        if (values != null && values.size() > 0) {
+            if (!map.containsKey(key)) {
+                map.put(key, new ArrayList<String>());
+            }
+
+            List<String> list = (List<String>)map.get(key);
+
+            for (String value : values) {
+                if (!list.contains(value)) {
+                    list.add(value);
                 }
             }
         }

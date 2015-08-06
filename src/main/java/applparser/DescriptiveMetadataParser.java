@@ -33,6 +33,16 @@ public class DescriptiveMetadataParser extends ApplParser {
     private Map<String, List<Map<String, Object>>> tickers;
     private Map<String, List<Map<String, Object>>> exchanges;
     private String companyKey;
+    private Map<String, Map<String, Object>> persons;
+    private boolean addPersons;
+    private Map<String, Map<String, Map<String, Object>>> teams;
+    private Map<String, Map<String, Map<String, Object>>> associatedevents;
+    private Map<String, Map<String, Map<String, Object>>> associatedstates;
+    private Map<String, List<String>> rels;
+    private Map<String, List<String>> types;
+    private Map<String, List<String>> extids;
+    private String creator;
+    private String personKey;
     private boolean calculate;
 
     public DescriptiveMetadataParser(Map<String, Object> map) {
@@ -128,6 +138,10 @@ public class DescriptiveMetadataParser extends ApplParser {
         if (this.addCompanies) {
             map.replace("companies", null, this.companies.values());
             this.addCompanies = false;
+        }
+        if (this.addPersons) {
+            map.replace("persons", null, this.persons.values());
+            this.addPersons = false;
         }
 
         if (!this.calculate) {
@@ -250,7 +264,15 @@ public class DescriptiveMetadataParser extends ApplParser {
                 }
             } else {
                 if (authority.equalsIgnoreCase("AP Party")) {
+                    if (this.persons == null)
+                        this.persons = new LinkedHashMap<String, Map<String, Object>>();
 
+                    Map<String, Object> person = setPerson(code, name, system, this.persons, xmlr, map);
+
+                    if (person != null && !this.addPersons) {
+                        this.addPersons = true;
+                        map.put("persons", null);
+                    }
                 } else if (authority.equalsIgnoreCase("AP Organization")) {
                     if (this.organizations == null)
                         this.organizations = new LinkedHashMap<String, Map<String, Object>>();
@@ -318,6 +340,131 @@ public class DescriptiveMetadataParser extends ApplParser {
         }
 
         return subject;
+    }
+
+    private Map<String, Object> setPerson(String code, String name, String system, Map<String, Map<String, Object>> persons, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
+        Map<String, Object> person = Helpers.getCodeNameObject(code, name);
+
+        String key = String.format("%s-%s", code, name);
+        boolean exists = persons.containsKey(key);
+        if (exists) {
+            person = (Map<String, Object>) persons.get(key);
+        }
+
+        if (this.teams == null) this.teams = new HashMap<String, Map<String, Map<String, Object>>>();
+        if (this.associatedevents == null)
+            this.associatedevents = new HashMap<String, Map<String, Map<String, Object>>>();
+        if (this.associatedstates == null)
+            this.associatedstates = new HashMap<String, Map<String, Map<String, Object>>>();
+        if (this.rels == null) this.rels = new HashMap<String, List<String>>();
+        if (this.types == null) this.types = new HashMap<String, List<String>>();
+        if (this.extids == null) this.extids = new HashMap<String, List<String>>();
+        this.creator = null;
+        this.personKey = key;
+
+        iterateOccurrenceProperties(xmlr, map, this::setPersonProperties);
+
+        if (this.creator == null) this.creator = system;
+        Helpers.addSchemeAndCreatorToMap(this.creator, person);
+
+        if (!exists) {
+            List<String> rels = new ArrayList<String>();
+            rels.add("direct");
+            person.put("rels", rels);
+        }
+
+        Helpers.addListToMapList(this.rels.get(key), "rels", person);
+        Helpers.addListToMapList(this.types.get(key), "types", person);
+
+        Map<String, Map<String, Object>> teams = this.teams.containsKey(key) ? this.teams.get(key) : null;
+        if (teams != null && teams.size() > 0) {
+            person.put("teams", teams.values());
+        }
+
+        Map<String, Map<String, Object>> associatedstates = this.associatedstates.containsKey(key) ? this.associatedstates.get(key) : null;
+        if (associatedstates != null && associatedstates.size() > 0) {
+            person.put("associatedstates", associatedstates.values());
+        }
+
+        Map<String, Map<String, Object>> associatedevents = this.associatedevents.containsKey(key) ? this.associatedevents.get(key) : null;
+        if (associatedevents != null && associatedevents.size() > 0) {
+            person.put("associatedevents", associatedevents.values());
+        }
+
+        Helpers.addListToMapList(this.extids.get(key), "extids", person);
+
+        if (exists) {
+            persons.replace(key, person);
+        } else {
+            persons.put(key, person);
+        }
+
+        return person;
+    }
+
+    private void setPersonProperties(String name, String value, XMLStreamReader xmlr, Map<String, Object> map) {
+        if (name.equalsIgnoreCase("PartyType")) {
+            if (value.equalsIgnoreCase("PERSON_FEATURED")) {
+                if (!this.rels.containsKey(this.personKey)) {
+                    this.rels.put(this.personKey, new ArrayList<String>());
+                }
+                List<String> rels = this.rels.get(this.personKey);
+                if (!rels.contains(value)) rels.add(value);
+
+                if (this.creator == null) this.creator = "Editorial";
+            } else {
+                if (!this.types.containsKey(this.personKey)) {
+                    this.types.put(this.personKey, new ArrayList<String>());
+                }
+                List<String> types = this.types.get(this.personKey);
+                if (!types.contains(value)) types.add(value);
+            }
+        } else if (name.equalsIgnoreCase("Team")) {
+            String id = xmlr.getAttributeValue("", "Id");
+            if (id != null) {
+                String key = id + value;
+
+                if (!this.teams.containsKey(this.personKey)) {
+                    this.teams.put(this.personKey, new LinkedHashMap<String, Map<String, Object>>());
+                }
+                Map<String, Map<String, Object>> teams = this.teams.get(this.personKey);
+                if (!teams.containsKey(key)) {
+                    teams.put(key, Helpers.getCodeNameObject(id, value));
+                }
+            }
+        } else if (name.equalsIgnoreCase("AssociatedEvent")) {
+            String id = xmlr.getAttributeValue("", "Id");
+            if (id != null) {
+                String key = id + value;
+
+                if (!this.associatedevents.containsKey(this.personKey)) {
+                    this.associatedevents.put(this.personKey, new LinkedHashMap<String, Map<String, Object>>());
+                }
+                Map<String, Map<String, Object>> events = this.associatedevents.get(this.personKey);
+                if (!events.containsKey(key)) {
+                    events.put(key, Helpers.getCodeNameObject(id, value));
+                }
+            }
+        } else if (name.equalsIgnoreCase("AssociatedState")) {
+            String id = xmlr.getAttributeValue("", "Id");
+            if (id != null) {
+                String key = id + value;
+
+                if (!this.associatedstates.containsKey(this.personKey)) {
+                    this.associatedstates.put(this.personKey, new LinkedHashMap<String, Map<String, Object>>());
+                }
+                Map<String, Map<String, Object>> states = this.associatedstates.get(this.personKey);
+                if (!states.containsKey(key)) {
+                    states.put(key, Helpers.getCodeNameObject(id, value));
+                }
+            }
+        } else if (name.equalsIgnoreCase("ExtId")) {
+            if (!this.extids.containsKey(this.personKey)) {
+                this.extids.put(this.personKey, new ArrayList<String>());
+            }
+            List<String> ids = this.extids.get(this.personKey);
+            if (!ids.contains(value)) ids.add(value);
+        }
     }
 
     private Map<String, Object> setCompany(String code, String name, String system, Map<String, Map<String, Object>> companies, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
@@ -403,14 +550,13 @@ public class DescriptiveMetadataParser extends ApplParser {
             if (!this.symbols.containsKey(this.companyKey)) {
                 this.symbols.put(this.companyKey, new LinkedHashMap<String, Map<String, Object>>());
             }
-            Map<String, Map<String, Object>> symbols = this.symbols.get(this.companyKey);
 
             if (tokens.length > 1 && !this.symbols.containsKey(key)) {
                 Map<String, Object> symbol = new LinkedHashMap<String, Object>();
                 symbol.put("instrument", key);
                 symbol.put("exchange", tokens[0]);
                 symbol.put("ticker", tokens[1]);
-                symbols.put(key, symbol);
+                this.symbols.get(this.companyKey).put(key, symbol);
             }
         } else if (name.equalsIgnoreCase("PrimaryTicker")
                 || name.equalsIgnoreCase("Ticker")) {
@@ -422,21 +568,19 @@ public class DescriptiveMetadataParser extends ApplParser {
             if (!this.tickers.containsKey(this.companyKey)) {
                 this.tickers.put(this.companyKey, new ArrayList<Map<String, Object>>());
             }
-            List<Map<String, Object>> tickers = this.tickers.get(this.companyKey);
-            tickers.add(ticker);
+            this.tickers.get(this.companyKey).add(ticker);
         } else if (name.equalsIgnoreCase("APIndustry")) {
             String id = xmlr.getAttributeValue("", "Id");
 
             if (!this.industries.containsKey(this.companyKey)) {
                 this.industries.put(this.companyKey, new LinkedHashMap<String, Map<String, Object>>());
             }
-            Map<String, Map<String, Object>> industries = this.industries.get(this.companyKey);
 
             if (id != null && !this.industries.containsKey(id)) {
                 Map<String, Object> industry = new LinkedHashMap<String, Object>();
                 industry.put("code", id);
                 industry.put("name", value);
-                industries.put(id, industry);
+                this.industries.get(this.companyKey).put(id, industry);
             }
         } else if (name.equalsIgnoreCase("Exchange")) {
             String id = xmlr.getAttributeValue("", "Id");
@@ -448,8 +592,7 @@ public class DescriptiveMetadataParser extends ApplParser {
                 if (!this.exchanges.containsKey(this.companyKey)) {
                     this.exchanges.put(this.companyKey, new ArrayList<Map<String, Object>>());
                 }
-                List<Map<String, Object>> exchanges = this.exchanges.get(this.companyKey);
-                exchanges.add(exchange);
+                this.exchanges.get(this.companyKey).add(exchange);
             }
         }
     }
