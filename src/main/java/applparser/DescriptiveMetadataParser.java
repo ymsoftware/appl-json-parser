@@ -51,7 +51,12 @@ public class DescriptiveMetadataParser extends ApplParser {
     private boolean calculate;
     private Map<String, Map<String, Object>> audiences;
     private boolean addAudiences;
+    private Map<String, Map<String, Object>> services;
+    private Map<String, Map<String, Object>> sales;
+    private boolean addServices;
     private boolean geo;
+    private List<Map<String, Object>> thirdpartymeta;
+    private boolean addThirdPartyMeta;
 
     public DescriptiveMetadataParser(Map<String, Object> map) {
         this.calculate = map.containsKey("addConsumerReady");
@@ -96,13 +101,62 @@ public class DescriptiveMetadataParser extends ApplParser {
                 }
                 break;
             case "SalesClassification":
-                //classification,function,classification
+                iterateOccurrences(name, null, null, xmlr, map, this::setSalesClassification);
                 break;
             case "Comment":
-                //classification,function,classification
+                String text = xmlr.getElementText();
+                if (text != null && text.length() > 0) {
+                    ensureServices(map);
+                    Map<String, Object> comment = new HashMap<String, Object>();
+                    comment.put("apservice", text);
+                    this.services.put(text, comment);
+                }
                 break;
             case "ThirdPartyMeta":
-                //classification,function,classification
+                Map<String, Object> thirdparty = new LinkedHashMap<String, Object>();
+
+                String system = xmlr.getAttributeValue("", "System");
+                if (system != null) thirdparty.put("creator", system);
+
+                String vocabulary = xmlr.getAttributeValue("", "Vocabulary");
+                if (vocabulary != null) thirdparty.put("vocabulary", vocabulary);
+
+                String vocabularyowher = xmlr.getAttributeValue("", "VocabularyOwner");
+                if (vocabularyowher != null) thirdparty.put("vocabularyowner", vocabularyowher);
+
+                while (xmlr.hasNext()) {
+                    xmlr.next();
+
+                    int eventType = xmlr.getEventType();
+
+                    if (eventType == XMLStreamReader.START_ELEMENT) {
+                        if (xmlr.getLocalName().equals("Occurrence")) {
+                            String id = xmlr.getAttributeValue("", "Id");
+                            if (id != null) thirdparty.put("code", id);
+
+                            String value = xmlr.getAttributeValue("", "Value");
+                            if (value != null) thirdparty.put("name", value);
+
+                            break;
+                        }
+
+                    } else if (eventType == XMLStreamReader.END_ELEMENT) {
+                        if (xmlr.getLocalName() == name) {
+                            break;
+                        }
+                    }
+                }
+
+                if (thirdparty.size() > 0) {
+                    if (!this.addThirdPartyMeta) {
+                        this.addThirdPartyMeta = true;
+                        this.thirdpartymeta = new ArrayList<Map<String, Object>>();
+                        map.put("thirdpartymeta", null);
+                    }
+
+                    this.thirdpartymeta.add(thirdparty);
+                }
+
                 break;
         }
     }
@@ -162,6 +216,22 @@ public class DescriptiveMetadataParser extends ApplParser {
         if (this.addAudiences) {
             map.replace("audiences", null, this.audiences.values());
             this.addAudiences = false;
+        }
+        if (this.addServices) {
+            if (this.sales != null && this.sales.size() > 0) {
+                for (String key : this.sales.keySet()) {
+                    if (!this.services.containsKey(key)) {
+                        this.services.put(key, this.sales.get(key));
+                    }
+                }
+            }
+
+            map.replace("services", null, this.services.values());
+            this.addServices = false;
+        }
+        if (this.addThirdPartyMeta) {
+            map.replace("thirdpartymeta", null, this.thirdpartymeta);
+            this.addThirdPartyMeta = false;
         }
 
         if (!this.calculate) {
@@ -369,6 +439,27 @@ public class DescriptiveMetadataParser extends ApplParser {
                     }
 
                     this.audiences.put(key, audience);
+                }
+            }
+        }
+    }
+
+    private void setSalesClassification(String authority, String system, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
+        String code = xmlr.getAttributeValue("", "Id");
+        if (code != null) {
+            if (this.sales == null) {
+                this.sales = new LinkedHashMap<String, Map<String, Object>>();
+            }
+
+            if (!this.sales.containsKey(code)) {
+                String value = xmlr.getAttributeValue("", "Value");
+                if (value != null) {
+                    ensureServices(map);
+
+                    Map<String, Object> sale = new LinkedHashMap<String, Object>();
+                    sale.put("code", code);
+                    sale.put("apsales", value);
+                    this.services.put(code, sale);
                 }
             }
         }
@@ -808,6 +899,14 @@ public class DescriptiveMetadataParser extends ApplParser {
             }
         }
         return null;
+    }
+
+    private void ensureServices(Map<String, Object> map) {
+        if (!this.addServices) {
+            this.addServices = true;
+            this.services = new LinkedHashMap<String, Map<String, Object>>();
+            map.put("services", null);
+        }
     }
 
     private class DateLineLocationParser extends ObjectParser {

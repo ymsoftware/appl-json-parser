@@ -435,4 +435,81 @@ public class DescriptiveMetadataTest {
         assertEquals("a1", next.get("code").asText());
         assertEquals("AUDPLATFORM", next.get("type").asText());
     }
+
+    @Test
+    public void testServices() throws IOException {
+        String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
+                + "<DescriptiveMetadata>"
+                + "<SalesClassification Authority=\"AP Sales Code\" System=\"Editorial\">"
+                + "<Occurrence Id=\"a1\" Value=\"Basic\" />"
+                + "</SalesClassification>"
+                + "<SalesClassification Authority=\"AP Sales Code\" System=\"Editorial\">"
+                + "<Occurrence Id=\"a2\" Value=\"Standard\" />"
+                + "</SalesClassification>"
+                + "<SalesClassification Authority=\"AP Sales Code\" System=\"Editorial\">"
+                + "<Occurrence Id=\"a1\" Value=\"Basic\" />"
+                + "</SalesClassification>"
+                + "<SalesClassification Authority=\"AP Sales Code\" System=\"Editorial\">"
+                + "<Occurrence Id=\"Plus\" Value=\"Basic\" />"
+                + "</SalesClassification>"
+                + "<Comment>Select</Comment>"
+                + "<Comment>Plus</Comment>"
+                + "</DescriptiveMetadata>"
+                + "</Publication>";
+
+
+        DocumentParser parser = new DocumentParser();
+        String json = parser.parse(appl);
+
+        ObjectMapper m = new ObjectMapper();
+        JsonNode rootNode = m.readTree(json);
+        JsonNode testNode = rootNode.path("services");
+        assertEquals(true, testNode.isArray());
+        assertEquals(4, testNode.size());
+
+        Iterator<JsonNode> elements = testNode.elements();
+
+        JsonNode next = elements.next();
+        assertEquals("Basic", next.get("apsales").asText());
+        assertEquals("a1", next.get("code").asText());
+    }
+
+    @Test
+    public void testThirdPartyMeta() throws IOException {
+        String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
+                + "<DescriptiveMetadata>"
+                + "<ThirdPartyMeta Vocabulary=\"v1\" VocabularyOwner=\"vo1\">"
+                + "<Occurrence Id=\"a1\" Value=\"Health\" />"
+                + "</ThirdPartyMeta>"
+                + "<ThirdPartyMeta Vocabulary=\"v2\" VocabularyOwner=\"vo1\">"
+                + "<Occurrence Value=\"Health\" />"
+                + "</ThirdPartyMeta>"
+                + "</DescriptiveMetadata>"
+                + "</Publication>";
+
+
+        DocumentParser parser = new DocumentParser();
+        String json = parser.parse(appl);
+
+        ObjectMapper m = new ObjectMapper();
+        JsonNode rootNode = m.readTree(json);
+        JsonNode testNode = rootNode.path("thirdpartymeta");
+        assertEquals(true, testNode.isArray());
+        assertEquals(2, testNode.size());
+
+        Iterator<JsonNode> elements = testNode.elements();
+
+        JsonNode next = elements.next();
+        assertEquals("v1", next.get("vocabulary").asText());
+        assertEquals("vo1", next.get("vocabularyowner").asText());
+        assertEquals("a1", next.get("code").asText());
+        assertEquals("Health", next.get("name").asText());
+
+        next = elements.next();
+        assertEquals("v2", next.get("vocabulary").asText());
+        assertEquals("vo1", next.get("vocabularyowner").asText());
+        assertEquals("Health", next.get("name").asText());
+    }
 }
