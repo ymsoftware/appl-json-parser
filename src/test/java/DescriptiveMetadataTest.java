@@ -246,6 +246,13 @@ public class DescriptiveMetadataTest {
                 + "<Property Id=\"a6\" Value=\"La Liga\" Name=\"AssociatedEvent\"/>"
                 + "</Occurrence>"
                 + "</EntityClassification>"
+                + "<EntityClassification Authority=\"AP Geography\" System=\"Teragram\">"
+                + "<Occurrence Id=\"a1\" Value=\"Venezuela\" ParentId=\"p1\" ActualMatch=\"true\">"
+                + "<Property Id=\"a2\" Value=\"Nation\" Name=\"LocationType\"/>"
+                + "<Property Id=\"a3\" Value=\"8.00000001\" Name=\"CentroidLatitude\"/>"
+                + "<Property Id=\"a4\" Value=\"-66.000001\" Name=\"CentroidLongitude\"/>"
+                + "</Occurrence>"
+                + "</EntityClassification>"
                 + "</DescriptiveMetadata>"
                 + "</Publication>";
 
@@ -365,5 +372,26 @@ public class DescriptiveMetadataTest {
         assertEquals(true, array.isArray());
         assertEquals(1, array.size());
         assertEquals("La Liga", array.elements().next().get("name").asText());
+
+        testNode = rootNode.path("places");
+        assertEquals(true, testNode.isArray());
+        assertEquals(1, testNode.size());
+
+        elements = testNode.elements();
+
+        next = elements.next();
+        assertEquals("Venezuela", next.get("name").asText());
+        assertEquals("a1", next.get("code").asText());
+        assertEquals("Teragram", next.get("creator").asText());
+        array = next.get("rels");
+        assertEquals(true, array.isArray());
+        assertEquals(1, array.size());
+        assertEquals("direct", array.elements().next().asText());
+        JsonNode child = next.get("locationtype");
+        assertEquals("Nation", child.get("name").asText());
+        child = next.get("geometry_geojson");
+        array = child.get("coordinates");
+        assertEquals(true, array.isArray());
+        assertEquals(2, array.size());
     }
 }

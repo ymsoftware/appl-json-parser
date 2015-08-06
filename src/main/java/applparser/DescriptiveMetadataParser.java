@@ -43,6 +43,11 @@ public class DescriptiveMetadataParser extends ApplParser {
     private Map<String, List<String>> extids;
     private String creator;
     private String personKey;
+    private Map<String, Map<String, Object>> places;
+    private boolean addPlaces;
+    private Map<String, Object> locationtype;
+    private Number lat;
+    private Number lon;
     private boolean calculate;
 
     public DescriptiveMetadataParser(Map<String, Object> map) {
@@ -142,6 +147,10 @@ public class DescriptiveMetadataParser extends ApplParser {
         if (this.addPersons) {
             map.replace("persons", null, this.persons.values());
             this.addPersons = false;
+        }
+        if (this.addPlaces) {
+            map.replace("places", null, this.places.values());
+            this.addPlaces = false;
         }
 
         if (!this.calculate) {
@@ -294,7 +303,15 @@ public class DescriptiveMetadataParser extends ApplParser {
                 } else if (authority.equalsIgnoreCase("AP Geography")
                         || authority.equalsIgnoreCase("AP Country")
                         || authority.equalsIgnoreCase("AP Region")) {
+                    if (this.places == null)
+                        this.places = new LinkedHashMap<String, Map<String, Object>>();
 
+                    Map<String, Object> place = setPlace(code, name, system, this.places, xmlr, map);
+
+                    if (place != null && !this.addPlaces) {
+                        this.addPlaces = true;
+                        map.put("places", null);
+                    }
                 }
             }
         }
@@ -310,19 +327,9 @@ public class DescriptiveMetadataParser extends ApplParser {
                 subject = (Map<String, Object>) subjects.get(key);
             }
 
+            String rel = calculateRel(system, xmlr);
+
             Helpers.addSchemeAndCreatorToMap(system, subject);
-
-            String rel = null;
-            if (system != null && system.equalsIgnoreCase("RTE")) {
-                rel = "inferred";
-            } else {
-                String match = xmlr.getAttributeValue("", "ActualMatch");
-                if (match != null) {
-                    if (match.equalsIgnoreCase("true")) rel = "direct";
-                    else if (match.equalsIgnoreCase("false")) rel = "ancestor";
-                }
-            }
-
             Helpers.addStringToMapList(rel, "rels", subject);
             Helpers.addStringToMapList(xmlr.getAttributeValue("", "ParentId"), "parentids", subject);
 
@@ -467,6 +474,76 @@ public class DescriptiveMetadataParser extends ApplParser {
         }
     }
 
+    private Map<String, Object> setPlace(String code, String name, String system, Map<String, Map<String, Object>> places, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
+        Map<String, Object> place = Helpers.getCodeNameObject(code, name);
+
+        String key = String.format("%s-%s", code, name);
+        boolean exists = places.containsKey(key);
+        if (exists) {
+            place = (Map<String, Object>) places.get(key);
+        }
+
+        String rel = calculateRel(system, xmlr);
+
+        Helpers.addSchemeAndCreatorToMap(system, place);
+        Helpers.addStringToMapList(rel, "rels", place);
+        Helpers.addStringToMapList(xmlr.getAttributeValue("", "ParentId"), "parentids", place);
+
+        String topparent = xmlr.getAttributeValue("", "TopParent");
+        if (topparent != null && !place.containsKey("topparent")) {
+            if (topparent.equalsIgnoreCase("true")) {
+                place.put("topparent", true);
+            } else if (topparent.equalsIgnoreCase("false")) {
+                place.put("topparent", false);
+            }
+        }
+
+        if (!exists) {
+            this.locationtype = null;
+            this.lat = null;
+            this.lon = null;
+
+            iterateOccurrenceProperties(xmlr, map, this::setPlaceProperties);
+
+            if (this.locationtype != null) {
+                place.put("locationtype", this.locationtype);
+            }
+
+            if (this.lon != null && this.lat != null) {
+                Map<String, Object> geo = new LinkedHashMap<String, Object>();
+                geo.put("type", "Point");
+                geo.put("coordinates", new Number[]{this.lon, this.lat});
+                place.put("geometry_geojson", geo);
+            }
+        }
+
+        if (exists) {
+            places.replace(key, place);
+        } else {
+            places.put(key, place);
+        }
+
+        return place;
+    }
+
+    private void setPlaceProperties(String name, String value, XMLStreamReader xmlr, Map<String, Object> map) {
+        if (name.equalsIgnoreCase("LocationType")) {
+            if (this.locationtype == null) {
+                String id = xmlr.getAttributeValue("", "Id");
+                this.locationtype = Helpers.getCodeNameObject(id, value);
+            }
+
+        } else if (name.equalsIgnoreCase("CentroidLongitude")) {
+            if (this.lon == null) {
+                this.lon = Helpers.parseNumber(value);
+            }
+        } else if (name.equalsIgnoreCase("CentroidLatitude")) {
+            if (this.lat == null) {
+                this.lat = Helpers.parseNumber(value);
+            }
+        }
+    }
+
     private Map<String, Object> setCompany(String code, String name, String system, Map<String, Map<String, Object>> companies, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
         Map<String, Object> company = Helpers.getCodeNameObject(code, name);
 
@@ -479,7 +556,9 @@ public class DescriptiveMetadataParser extends ApplParser {
         Helpers.addSchemeAndCreatorToMap(system, company);
 
         if (!exists) {
-            company.put("rels", new String[]{"direct"});
+            List<String> rels = new ArrayList<String>();
+            rels.add("direct");
+            company.put("rels", rels);
         }
 
         if (this.symbols == null) this.symbols = new HashMap<String, Map<String, Map<String, Object>>>();
@@ -641,6 +720,19 @@ public class DescriptiveMetadataParser extends ApplParser {
                 }
             }
         }
+    }
+
+    private String calculateRel(String system, XMLStreamReader xmlr) {
+        if (system != null && system.equalsIgnoreCase("RTE")) {
+            return "inferred";
+        } else {
+            String match = xmlr.getAttributeValue("", "ActualMatch");
+            if (match != null) {
+                if (match.equalsIgnoreCase("true")) return "direct";
+                else if (match.equalsIgnoreCase("false")) return "ancestor";
+            }
+        }
+        return null;
     }
 
     private class DateLineLocationParser extends ObjectParser {
