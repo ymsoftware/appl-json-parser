@@ -28,10 +28,11 @@ public class DescriptiveMetadataParser extends ApplParser {
     private boolean addOrganizations;
     private Map<String, Map<String, Object>> companies;
     private boolean addCompanies;
-    private Map<String, Map<String, Object>> symbols;
-    private Map<String, Map<String, Object>> industries;
-    private List<Map<String, Object>> tickers;
-    private List<Map<String, Object>> exchanges;
+    private Map<String, Map<String, Map<String, Object>>> symbols;
+    private Map<String, Map<String, Map<String, Object>>> industries;
+    private Map<String, List<Map<String, Object>>> tickers;
+    private Map<String, List<Map<String, Object>>> exchanges;
+    private String companyKey;
     private boolean calculate;
 
     public DescriptiveMetadataParser(Map<String, Object> map) {
@@ -55,14 +56,18 @@ public class DescriptiveMetadataParser extends ApplParser {
                 String authority = xmlr.getAttributeValue("", "Authority");
                 if (authority != null) {
                     setGenerator(authority, xmlr, map);
-                    iterateOccurrences(name, authority, xmlr, map, this::setSubjectClassification);
+
+                    String system = xmlr.getAttributeValue("", "System");
+                    iterateOccurrences(name, system, authority, xmlr, map, this::setSubjectClassification);
                 }
                 break;
             case "EntityClassification":
                 authority = xmlr.getAttributeValue("", "Authority");
                 if (authority != null) {
                     setGenerator(authority, xmlr, map);
-                    iterateOccurrences(name, authority, xmlr, map, this::setEntityClassification);
+
+                    String system = xmlr.getAttributeValue("", "System");
+                    iterateOccurrences(name, system, authority, xmlr, map, this::setEntityClassification);
                 }
                 break;
             case "AudienceClassification":
@@ -164,7 +169,7 @@ public class DescriptiveMetadataParser extends ApplParser {
         }
     }
 
-    private void setSubjectClassification(String authority, XMLStreamReader xmlr, Map<String, Object> map) {
+    private void setSubjectClassification(String authority, String system, XMLStreamReader xmlr, Map<String, Object> map) {
         String code = xmlr.getAttributeValue("", "Id");
         String name = xmlr.getAttributeValue("", "Value");
 
@@ -206,7 +211,7 @@ public class DescriptiveMetadataParser extends ApplParser {
             }
         } else if (authority.equalsIgnoreCase("AP Subject")) {
             if (this.subjects == null) this.subjects = new LinkedHashMap<String, Map<String, Object>>();
-            Map<String, Object> subject = setSubject(code, name, this.subjects, xmlr, map);
+            Map<String, Object> subject = setSubject(code, name, system, this.subjects, xmlr, map);
             if (subject != null && !this.addSubjects) {
                 this.addSubjects = true;
                 map.put("subjects", null);
@@ -226,7 +231,7 @@ public class DescriptiveMetadataParser extends ApplParser {
         }
     }
 
-    private void setEntityClassification(String authority, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
+    private void setEntityClassification(String authority, String system, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
         String code = xmlr.getAttributeValue("", "Id");
         String name = xmlr.getAttributeValue("", "Value");
         if (code != null && name != null) {
@@ -244,14 +249,12 @@ public class DescriptiveMetadataParser extends ApplParser {
                     this.events.put(code, event);
                 }
             } else {
-                String system = xmlr.getAttributeValue("", "System");
-
                 if (authority.equalsIgnoreCase("AP Party")) {
 
                 } else if (authority.equalsIgnoreCase("AP Organization")) {
                     if (this.organizations == null)
                         this.organizations = new LinkedHashMap<String, Map<String, Object>>();
-                    Map<String, Object> subject = setSubject(code, name, this.organizations, xmlr, map);
+                    Map<String, Object> subject = setSubject(code, name, system, this.organizations, xmlr, map);
                     if (subject != null && !this.addOrganizations) {
                         this.addOrganizations = true;
                         map.put("organizations", null);
@@ -259,7 +262,9 @@ public class DescriptiveMetadataParser extends ApplParser {
                 } else if (authority.equalsIgnoreCase("AP Company")) {
                     if (this.companies == null)
                         this.companies = new LinkedHashMap<String, Map<String, Object>>();
+
                     Map<String, Object> company = setCompany(code, name, system, this.companies, xmlr, map);
+
                     if (company != null && !this.addCompanies) {
                         this.addCompanies = true;
                         map.put("companies", null);
@@ -273,12 +278,10 @@ public class DescriptiveMetadataParser extends ApplParser {
         }
     }
 
-    private Map<String, Object> setSubject(String code, String name, Map<String, Map<String, Object>> subjects, XMLStreamReader xmlr, Map<String, Object> map) {
+    private Map<String, Object> setSubject(String code, String name, String system, Map<String, Map<String, Object>> subjects, XMLStreamReader xmlr, Map<String, Object> map) {
         Map<String, Object> subject = Helpers.getCodeNameObject(code, name);
 
         if (subject != null) {
-            String system = xmlr.getAttributeValue("", "System");
-
             String key = String.format("%s-%s", code, name);
             boolean exists = subjects.containsKey(key);
             if (exists) {
@@ -332,18 +335,23 @@ public class DescriptiveMetadataParser extends ApplParser {
             company.put("rels", new String[]{"direct"});
         }
 
-        this.symbols = new HashMap<String, Map<String, Object>>();
-        this.industries = new HashMap<String, Map<String, Object>>();
-        this.tickers = new ArrayList<Map<String, Object>>();
-        this.exchanges = new ArrayList<Map<String, Object>>();
-        iterateOccurrenceProperties(xmlr, map, (n, v, x, m) -> setCompanyProperties(n, v, x, m));
+        if (this.symbols == null) this.symbols = new HashMap<String, Map<String, Map<String, Object>>>();
+        if (this.industries == null) this.industries = new HashMap<String, Map<String, Map<String, Object>>>();
+        if (this.tickers == null) this.tickers = new HashMap<String, List<Map<String, Object>>>();
+        if (this.exchanges == null) this.exchanges = new HashMap<String, List<Map<String, Object>>>();
+        this.companyKey = key;
 
-        if (this.tickers.size() > 0 && this.exchanges.size() > 0) {
-            for (Map<String, Object> ticker : this.tickers) {
+        iterateOccurrenceProperties(xmlr, map, this::setCompanyProperties);
+
+        List<Map<String, Object>> tickers = this.tickers.containsKey(key) ? this.tickers.get(key) : null;
+        List<Map<String, Object>> exchanges = this.exchanges.containsKey(key) ? this.exchanges.get(key) : null;
+
+        if (tickers != null && tickers.size() > 0 && exchanges != null && exchanges.size() > 0) {
+            for (Map<String, Object> ticker : tickers) {
                 String parentid = (String) ticker.get("parentid");
-                Map<String, Object> exchange = this.exchanges.get(0);
-                if (parentid != null) {
-                    for (Map<String, Object> exch : this.exchanges) {
+                Map<String, Object> exchange = exchanges.get(0);
+                if (parentid != null && !parentid.equalsIgnoreCase((String) exchange.get("id"))) {
+                    for (Map<String, Object> exch : exchanges) {
                         if (parentid.equalsIgnoreCase((String) exch.get("id"))) {
                             exchange = exch;
                             break;
@@ -351,24 +359,31 @@ public class DescriptiveMetadataParser extends ApplParser {
                     }
                 }
 
+                if (!this.symbols.containsKey(key)) {
+                    this.symbols.put(key, new LinkedHashMap<String, Map<String, Object>>());
+                }
+                Map<String, Map<String, Object>> symbols = this.symbols.get(key);
+
                 String e = ((String) exchange.get("value")).toUpperCase();
                 String t = ((String) ticker.get("value")).toUpperCase();
                 String k = String.format("%s:%s", e, t);
-                if (!this.symbols.containsKey(k)) {
+                if (!symbols.containsKey(k)) {
                     Map<String, Object> symbol = new LinkedHashMap<String, Object>();
                     symbol.put("instrument", k);
                     symbol.put("exchange", e);
                     symbol.put("ticker", t);
-                    this.symbols.put(key, symbol);
+                    symbols.put(k, symbol);
                 }
             }
         }
 
-        if (this.symbols.size() > 0) {
-            company.put("symbols", this.symbols);
+        Map<String, Map<String, Object>> symbols = this.symbols.containsKey(key) ? this.symbols.get(key) : null;
+        if (symbols != null && symbols.size() > 0) {
+            company.put("symbols", symbols.values());
         }
-        if (this.industries.size() > 0) {
-            company.put("industries", this.industries);
+        Map<String, Map<String, Object>> industries = this.industries.containsKey(key) ? this.industries.get(key) : null;
+        if (symbols != null && industries.size() > 0) {
+            company.put("industries", industries.values());
         }
 
         if (exists) {
@@ -384,12 +399,18 @@ public class DescriptiveMetadataParser extends ApplParser {
         if (name.equalsIgnoreCase("Instrument")) {
             String key = value.toUpperCase();
             String[] tokens = key.split(":");
+
+            if (!this.symbols.containsKey(this.companyKey)) {
+                this.symbols.put(this.companyKey, new LinkedHashMap<String, Map<String, Object>>());
+            }
+            Map<String, Map<String, Object>> symbols = this.symbols.get(this.companyKey);
+
             if (tokens.length > 1 && !this.symbols.containsKey(key)) {
                 Map<String, Object> symbol = new LinkedHashMap<String, Object>();
                 symbol.put("instrument", key);
                 symbol.put("exchange", tokens[0]);
                 symbol.put("ticker", tokens[1]);
-                this.symbols.put(key, symbol);
+                symbols.put(key, symbol);
             }
         } else if (name.equalsIgnoreCase("PrimaryTicker")
                 || name.equalsIgnoreCase("Ticker")) {
@@ -397,14 +418,25 @@ public class DescriptiveMetadataParser extends ApplParser {
             Map<String, Object> ticker = new LinkedHashMap<String, Object>();
             ticker.put("parentid", parentid);
             ticker.put("value", value);
-            this.tickers.add(ticker);
+
+            if (!this.tickers.containsKey(this.companyKey)) {
+                this.tickers.put(this.companyKey, new ArrayList<Map<String, Object>>());
+            }
+            List<Map<String, Object>> tickers = this.tickers.get(this.companyKey);
+            tickers.add(ticker);
         } else if (name.equalsIgnoreCase("APIndustry")) {
             String id = xmlr.getAttributeValue("", "Id");
+
+            if (!this.industries.containsKey(this.companyKey)) {
+                this.industries.put(this.companyKey, new LinkedHashMap<String, Map<String, Object>>());
+            }
+            Map<String, Map<String, Object>> industries = this.industries.get(this.companyKey);
+
             if (id != null && !this.industries.containsKey(id)) {
                 Map<String, Object> industry = new LinkedHashMap<String, Object>();
                 industry.put("code", id);
                 industry.put("name", value);
-                this.industries.put(id, industry);
+                industries.put(id, industry);
             }
         } else if (name.equalsIgnoreCase("Exchange")) {
             String id = xmlr.getAttributeValue("", "Id");
@@ -412,12 +444,17 @@ public class DescriptiveMetadataParser extends ApplParser {
                 Map<String, Object> exchange = new LinkedHashMap<String, Object>();
                 exchange.put("id", id);
                 exchange.put("value", value);
-                this.exchanges.add(exchange);
+
+                if (!this.exchanges.containsKey(this.companyKey)) {
+                    this.exchanges.put(this.companyKey, new ArrayList<Map<String, Object>>());
+                }
+                List<Map<String, Object>> exchanges = this.exchanges.get(this.companyKey);
+                exchanges.add(exchange);
             }
         }
     }
 
-    private void iterateOccurrences(String parentName, String authority, XMLStreamReader xmlr, Map<String, Object> map, OccurrenceParser action) throws XMLStreamException {
+    private void iterateOccurrences(String parentName, String system, String authority, XMLStreamReader xmlr, Map<String, Object> map, OccurrenceParser action) throws XMLStreamException {
         boolean end = false;
 
         while (!end && xmlr.hasNext()) {
@@ -427,7 +464,7 @@ public class DescriptiveMetadataParser extends ApplParser {
 
             if (eventType == XMLStreamReader.START_ELEMENT) {
                 if (xmlr.getLocalName().equals("Occurrence")) {
-                    action.parse(authority, xmlr, map);
+                    action.parse(authority, system, xmlr, map);
                 }
 
             } else if (eventType == XMLStreamReader.END_ELEMENT) {
@@ -507,7 +544,7 @@ public class DescriptiveMetadataParser extends ApplParser {
 
     @FunctionalInterface
     private interface OccurrenceParser {
-        void parse(String authority, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException;
+        void parse(String authority, String system, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException;
     }
 
     @FunctionalInterface

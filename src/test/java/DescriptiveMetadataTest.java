@@ -105,9 +105,12 @@ public class DescriptiveMetadataTest {
                 + "<Occurrence Id=\"a1\" />"
                 + "<Occurrence Id=\"a2\" />"
                 + "</SubjectClassification>"
-                + "<SubjectClassification Authority=\"AP Subject\">"
-                + "<Occurrence Id=\"a1\" Value=\"v1\" System=\"RTE\" ParentId=\"p1\" TopParent=\"true\" />"
+                + "<SubjectClassification Authority=\"AP Subject\" System=\"RTE\" >"
+                + "<Occurrence Id=\"a1\" Value=\"v1\" ParentId=\"p1\" TopParent=\"true\" />"
                 + "<Occurrence Id=\"a2\" ActualMatch=\"true\" />"
+                + "<Occurrence Id=\"a1\" Value=\"v1\" ActualMatch=\"true\" ParentId=\"p2\" TopParent=\"false\" />"
+                + "</SubjectClassification>"
+                + "<SubjectClassification Authority=\"AP Subject\" >"
                 + "<Occurrence Id=\"a1\" Value=\"v1\" ActualMatch=\"true\" ParentId=\"p2\" TopParent=\"false\" />"
                 + "</SubjectClassification>"
                 + "<SubjectClassification Authority=\"AP Audio Cut Number Code\">"
@@ -184,10 +187,117 @@ public class DescriptiveMetadataTest {
         array = next.get("rels");
         assertEquals(true, array.isArray());
         assertEquals(1, array.size());
-        assertEquals("direct", array.elements().next().asText());
+        assertEquals("inferred", array.elements().next().asText());
 
         testNode = rootNode.path("fixture");
         assertEquals("v1", testNode.get("name").asText());
         assertEquals("901", testNode.get("code").asText());
+    }
+
+    @Test
+    public void testEntitiess() throws IOException {
+        String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
+                + "<DescriptiveMetadata>"
+                + "<EntityClassification Authority=\"AP Event\">"
+                + "<Occurrence Id=\"a1\" Value=\"v1\" />"
+                + "<Occurrence Id=\"a2\" />"
+                + "</EntityClassification>"
+                + "<EntityClassification Authority=\"AP Organization\" System=\"Teragram\">"
+                + "<Occurrence Id=\"a1\" Value=\"v1\" ParentId=\"p1\" ActualMatch=\"true\" />"
+                + "<Occurrence Id=\"a2\" />"
+                + "</EntityClassification>"
+                + "<EntityClassification Authority=\"AP Company\" System=\"Teragram\">"
+                + "<Occurrence Id=\"MSFT\" Value=\"Microsoft\" />"
+                + "</EntityClassification>"
+                + "<EntityClassification Authority=\"AP Company\" System=\"Teragram\">"
+                + "<Occurrence Id=\"a1\" Value=\"Microsoft\">"
+                + "<Property Name=\"Instrument\" Value=\"NASDAQ:MSFT\" />"
+                + "<Property Name=\"Instrument\" Value=\"NASDAQ:APPL\" />"
+                + "<Property Name=\"APIndustry\" Value=\"Software\" Id=\"a1\" />"
+                + "<Property Name=\"Ticker\" Value=\"XYZ\" ParentId=\"a1\" />"
+                + "<Property Name=\"PrimaryTicker\" Value=\"XYZ\" ParentId=\"b1\" />"
+                + "<Property Name=\"PrimaryTicker\" Value=\"ABC\" ParentId=\"a1\" />"
+                + "<Property Name=\"Exchange\" Value=\"NYCE\" Id=\"a1\" />"
+                + "<Property Name=\"Exchange\" Value=\"SPIDER\" Id=\"b1\" />"
+                + "</Occurrence>"
+                + "<Occurrence Id=\"a1\" Value=\"Microsoft\">"
+                + "<Property Name=\"Instrument\" Value=\"RXE:MSFT\" />"
+                + "<Property Name=\"APIndustry\" Value=\"Hardware\" Id=\"b1\" />"
+                + "<Property Name=\"Ticker\" Value=\"XYZ\" ParentId=\"c1\" />"
+                + "<Property Name=\"Exchange\" Value=\"RXE\" Id=\"c1\" />"
+                + "</Occurrence>"
+                + "</EntityClassification>"
+                + "</DescriptiveMetadata>"
+                + "</Publication>";
+
+
+        DocumentParser parser = new DocumentParser();
+        String json = parser.parse(appl);
+
+        ObjectMapper m = new ObjectMapper();
+        JsonNode rootNode = m.readTree(json);
+        JsonNode testNode = rootNode.path("events");
+        assertEquals(true, testNode.isArray());
+        assertEquals(1, testNode.size());
+
+        Iterator<JsonNode> elements = testNode.elements();
+
+        JsonNode next = elements.next();
+        assertEquals("v1", next.get("name").asText());
+        assertEquals("a1", next.get("code").asText());
+
+        testNode = rootNode.path("organizations");
+        assertEquals(true, testNode.isArray());
+        assertEquals(1, testNode.size());
+
+        elements = testNode.elements();
+
+        next = elements.next();
+        assertEquals("v1", next.get("name").asText());
+        assertEquals("a1", next.get("code").asText());
+        assertEquals("Teragram", next.get("creator").asText());
+        JsonNode array = next.get("rels");
+        assertEquals(true, array.isArray());
+        assertEquals(1, array.size());
+        assertEquals("direct", array.elements().next().asText());
+        array=next.get("parentids");
+        assertEquals(true, array.isArray());
+        assertEquals(1, array.size());
+        assertEquals("p1", array.elements().next().asText());
+
+        testNode = rootNode.path("companies");
+        assertEquals(true, testNode.isArray());
+        assertEquals(2, testNode.size());
+
+        elements = testNode.elements();
+
+        next = elements.next();
+        assertEquals("Microsoft", next.get("name").asText());
+        assertEquals("MSFT", next.get("code").asText());
+        assertEquals("Teragram", next.get("creator").asText());
+        array = next.get("rels");
+        assertEquals(true, array.isArray());
+        assertEquals(1, array.size());
+        assertEquals("direct", array.elements().next().asText());
+
+        next = elements.next();
+        assertEquals("Microsoft", next.get("name").asText());
+        assertEquals("a1", next.get("code").asText());
+        assertEquals("Teragram", next.get("creator").asText());
+        array = next.get("rels");
+        assertEquals(true, array.isArray());
+        assertEquals(1, array.size());
+        assertEquals("direct", array.elements().next().asText());
+
+        array = next.get("symbols");
+        assertEquals(true, array.isArray());
+        assertEquals(7, array.size());
+        assertEquals("NASDAQ:MSFT", array.elements().next().get("instrument").asText());
+
+        array = next.get("industries");
+        assertEquals(true, array.isArray());
+        assertEquals(2, array.size());
+        assertEquals("Software", array.elements().next().get("name").asText());
     }
 }
