@@ -78,7 +78,13 @@ public class DocumentParser {
                             parser = new FilingMetadataParser();
                             break;
                         case "PublicationComponent":
-                            parser = new PublicationComponentParser();
+                            String role = xmlr.getAttributeValue("", "Role");
+                            if (role!=null){
+                                String type = xmlr.getAttributeValue("", "MediaType");
+                                if (type!=null){
+                                    parser = new PublicationComponentParser(role.toLowerCase(), type.toLowerCase());
+                                }
+                            }
                             break;
                         default:
                             if (parser != null) {
@@ -109,6 +115,10 @@ public class DocumentParser {
                                 }
 
                                 map.remove("addConsumerReady");
+                            }
+
+                            if (map.containsKey("addStateAudienece")){
+                                map.remove("addStateAudienece");
                             }
                     }
                 }

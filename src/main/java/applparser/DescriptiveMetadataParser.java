@@ -233,6 +233,10 @@ public class DescriptiveMetadataParser extends ApplParser {
         if (map.containsKey("addConsumerReady") && this.supCatCode != null && this.supCatCode.equalsIgnoreCase("v")) {
             map.remove("addConsumerReady");
         }
+
+        if (!this.geo){
+            map.put("addStateAudienece", true);
+        }
     }
 
     private void setDescriptions(XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
@@ -434,7 +438,7 @@ public class DescriptiveMetadataParser extends ApplParser {
                             }
 
                         } else if (eventType == XMLStreamReader.END_ELEMENT) {
-                            if (xmlr.getLocalName() == "Occurrence") {
+                            if (xmlr.getLocalName().equals("Occurrence")) {
                                 break;
                             }
                         }
@@ -883,7 +887,7 @@ public class DescriptiveMetadataParser extends ApplParser {
                 }
 
             } else if (eventType == XMLStreamReader.END_ELEMENT) {
-                if (xmlr.getLocalName() == "Occurrence") {
+                if (xmlr.getLocalName().equals("Occurrence")) {
                     end = true;
                 }
             }

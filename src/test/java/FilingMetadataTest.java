@@ -18,6 +18,7 @@ public class FilingMetadataTest {
                 + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<AdministrativeMetadata />"
                 + "<NewsLines />"
+                + "<DescriptiveMetadata />"
                 + "<FilingMetadata>"
                 + "<Id>f1</Id>"
                 + "<Source>s1</Source>"
@@ -62,6 +63,11 @@ public class FilingMetadataTest {
                 + "<FilingCountry>Canada</FilingCountry>"
                 + "<FilingCountry>Mexico</FilingCountry>"
                 + "</FilingMetadata>"
+                + "<FilingMetadata>"
+                + "<Id>f3</Id>"
+                + "<Source>nj</Source>"
+                + "<Category>n</Category>"
+                + "</FilingMetadata>"
                 + "</Publication>";
 
         DocumentParser parser = new DocumentParser();
@@ -71,7 +77,7 @@ public class FilingMetadataTest {
         JsonNode rootNode = m.readTree(json);
         JsonNode testNode = rootNode.path("filings");
         assertEquals(true, testNode.isArray());
-        assertEquals(2, testNode.size());
+        assertEquals(3, testNode.size());
 
         Iterator<JsonNode> elements = testNode.elements();
 
@@ -137,5 +143,10 @@ public class FilingMetadataTest {
         assertEquals(true, array.isArray());
         assertEquals(1, array.size());
         assertEquals("consumerready", array.elements().next().asText());
+
+        array = rootNode.get("audiences");
+        assertEquals(true, array.isArray());
+        assertEquals(1, array.size());
+        assertEquals("New Jersey", array.elements().next().get("name").asText());
     }
 }

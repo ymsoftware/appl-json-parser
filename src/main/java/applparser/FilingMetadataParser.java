@@ -18,6 +18,7 @@ public class FilingMetadataParser extends ApplParser {
     private String slugline;
     private String category;
     private String selector;
+    private String source;
     private List<String> filingcountries;
     private boolean addFilingCountries;
     private List<String> filingregions;
@@ -32,9 +33,6 @@ public class FilingMetadataParser extends ApplParser {
     private boolean addForeignKeys;
     private Map<String, Object> routings;
     private boolean addRoutings;
-
-    //title
-    //geo
 
     public FilingMetadataParser() {
         this.filing = new LinkedHashMap<String, Object>();
@@ -81,8 +79,14 @@ public class FilingMetadataParser extends ApplParser {
                 break;
             case "Id":
             case "ArrivalDateTime":
-            case "Source":
                 Helpers.safeAdd("filing" + name.toLowerCase(), xmlr.getElementText(), this.filing);
+                break;
+            case "Source":
+                text = xmlr.getElementText();
+                if (text != null && text.length() > 0) {
+                    Helpers.safeAdd("filingsource", text, this.filing);
+                    this.source = text;
+                }
                 break;
             case "Category":
                 text = xmlr.getElementText();
@@ -177,6 +181,251 @@ public class FilingMetadataParser extends ApplParser {
                 }
             }
         }
+
+        if (map.containsKey("addStateAudienece")) {
+            if (this.category != null && this.category.equalsIgnoreCase("n") && this.source != null && this.source.length() > 1) {
+                String code = this.source.toUpperCase();
+                if (code.length() > 2) code = code.substring(0, 2);
+
+                String id = null;
+                String name = null;
+
+                switch (code) {
+                    case "AL":
+                        id = "b8099e4881d610048a11df092526b43e";
+                        name = "Alabama";
+                        break;
+                    case "AK":
+                        id = "cbb727a881d610048a29df092526b43e";
+                        name = "Alaska";
+                        break;
+                    case "AZ":
+                        id = "e427079081d610048a4edf092526b43e";
+                        name = "Arizona";
+                        break;
+                    case "AR":
+                        id = "687e74a082af1004823adf092526b43e";
+                        name = "Arkansas";
+                        break;
+                    case "CA":
+                        id = "789fdd8882af10048263df092526b43e";
+                        name = "California";
+                        break;
+                    case "CO":
+                        id = "902a5eb082af1004828adf092526b43e";
+                        name = "Colorado";
+                        break;
+                    case "CT":
+                        id = "a42dc0a082af100482a7df092526b43e";
+                        name = "Connecticut";
+                        break;
+                    case "DE":
+                        id = "bcadd4f882af100482c9df092526b43e";
+                        name = "Delaware";
+                        break;
+                    case "FL":
+                        id = "cb06ab1082af100482f8df092526b43e";
+                        name = "Florida";
+                        break;
+                    case "GA":
+                        id = "dec1cce882af10048320df092526b43e";
+                        name = "Georgia";
+                        break;
+                    case "HI":
+                        id = "ee324cc082af10048342df092526b43e";
+                        name = "Hawaii";
+                        break;
+                    case "ID":
+                        id = "1885b7f082b01004835edf092526b43e";
+                        name = "Idaho";
+                        break;
+                    case "IL":
+                        id = "2c6a186082b010048379df092526b43e";
+                        name = "Illinois";
+                        break;
+                    case "IN":
+                        id = "0760000082b2100483c7df092526b43e";
+                        name = "Indiana";
+                        break;
+                    case "IA":
+                        id = "1608ba1082b310048433df092526b43e";
+                        name = "Iowa";
+                        break;
+                    case "KS":
+                        id = "1e8c5a7082b310048450df092526b43e";
+                        name = "Kansas";
+                        break;
+                    case "KY":
+                        id = "2f6e294082b310048474df092526b43e";
+                        name = "Kentucky";
+                        break;
+                    case "LA":
+                        id = "43fb970882b310048496df092526b43e";
+                        name = "Louisiana";
+                        break;
+                    case "ME":
+                        id = "8d2caa7082b3100484b8df092526b43e";
+                        name = "Maine";
+                        break;
+                    case "MD":
+                        id = "b0fa317082b3100484dbdf092526b43e";
+                        name = "Maryland";
+                        break;
+                    case "MA":
+                        id = "bed6942882b310048501df092526b43e";
+                        name = "Massachusetts";
+                        break;
+                    case "MI":
+                        id = "6bf49b4082c410048696df092526b43e";
+                        name = "Michigan";
+                        break;
+                    case "MN":
+                        id = "9f12355082c4100486addf092526b43e";
+                        name = "Minnesota";
+                        break;
+                    case "MS":
+                        id = "b3dfffa882c4100486c3df092526b43e";
+                        name = "Mississippi";
+                        break;
+                    case "MO":
+                        id = "bd8c35d082c4100486d5df092526b43e";
+                        name = "Missouri";
+                        break;
+                    case "MT":
+                        id = "6429117882c610048770df092526b43e";
+                        name = "Montana";
+                        break;
+                    case "NE":
+                        id = "808300b882c610048788df092526b43e";
+                        name = "Nebraska";
+                        break;
+                    case "NV":
+                        id = "8bb89dd082c61004879fdf092526b43e";
+                        name = "Nevada";
+                        break;
+                    case "NH":
+                        id = "9531546082c6100487b5df092526b43e";
+                        name = "New Hampshire";
+                        break;
+                    case "NJ":
+                        id = "a0eed68882c6100487cddf092526b43e";
+                        name = "New Jersey";
+                        break;
+                    case "NM":
+                        id = "aacce28082c6100487e4df092526b43e";
+                        name = "New Mexico";
+                        break;
+                    case "NY":
+                        id = "b58f18a082c6100487fbdf092526b43e";
+                        name = "New York";
+                        break;
+                    case "NC":
+                        id = "c01d179082c610048813df092526b43e";
+                        name = "North Carolina";
+                        break;
+                    case "ND":
+                        id = "cbaeb75882c61004882adf092526b43e";
+                        name = "North Dakota";
+                        break;
+                    case "OH":
+                        id = "dcb000c082c610048843df092526b43e";
+                        name = "Ohio";
+                        break;
+                    case "OK":
+                        id = "f142e8e082c610048858df092526b43e";
+                        name = "Oklahoma";
+                        break;
+                    case "OR":
+                        id = "fe016fe882c61004886adf092526b43e";
+                        name = "Oregon";
+                        break;
+                    case "PA":
+                        id = "0b394d7082c71004887fdf092526b43e";
+                        name = "Pennsylvania";
+                        break;
+                    case "RI":
+                        id = "1bf4bc0882c71004889cdf092526b43e";
+                        name = "Rhode Island";
+                        break;
+                    case "SC":
+                        id = "29d11ec082c7100488aedf092526b43e";
+                        name = "South Carolina";
+                        break;
+                    case "SD":
+                        id = "5578469882c7100488badf092526b43e";
+                        name = "South Dakota";
+                        break;
+                    case "TN":
+                        id = "62532b5882c7100488cedf092526b43e";
+                        name = "Tennessee";
+                        break;
+                    case "TX":
+                        id = "6e92d9b882c7100488e5df092526b43e";
+                        name = "Texas";
+                        break;
+                    case "UT":
+                        id = "c1dff44882c710048903df092526b43e";
+                        name = "Utah";
+                        break;
+                    case "VT":
+                        id = "d2f8d8a882c710048915df092526b43e";
+                        name = "Vermont";
+                        break;
+                    case "VA":
+                        id = "eaed376082c71004892cdf092526b43e";
+                        name = "Virginia";
+                        break;
+                    case "WA":
+                        id = "08a0a00882c810048942df092526b43e";
+                        name = "Washington";
+                        break;
+                    case "WV":
+                        id = "130bcce882c81004895adf092526b43e";
+                        name = "West Virginia";
+                        break;
+                    case "WI":
+                        id = "1bc1bc3082c81004896cdf092526b43e";
+                        name = "Wisconsin";
+                        break;
+                    case "WY":
+                        id = "2fb83d4082c810048984df092526b43e";
+                        name = "Wyoming";
+                        break;
+                    case "DC":
+                        id = "788b364882f110048df3df092526b43e";
+                        name = "District of Columbia";
+                        break;
+                    case "NYC":
+                        id = "b836d07082c610048807df092526b43e";
+                        name = "New York City";
+                        break;
+                }
+
+                if (id != null) {
+                    if (map.containsKey("audiences")) {
+                        List<Map<String, Object>> audiences = (List<Map<String, Object>>) map.get("audiences");
+                        final String test = id;
+                        if (audiences.stream().noneMatch(e -> ((String) e.get("code")).equalsIgnoreCase(test))) {
+                            audiences.add(getState(id, name));
+                        }
+                    } else {
+                        List<Map<String, Object>> audiences = new ArrayList<Map<String, Object>>();
+                        audiences.add(getState(id, name));
+                        map.put("audiences", audiences);
+                    }
+
+                    map.remove("addStateAudienece");
+                }
+            }
+        }
+    }
+
+    private Map<String, Object> getState(String code, String name) {
+        Map<String, Object> state = new LinkedHashMap<String, Object>();
+        state.put("code", code);
+        state.put("name", name);
+        state.put("type", "AUDGEOGRAPHY");
+        return state;
     }
 
     private void addCountry(String text) {
@@ -243,7 +492,7 @@ public class FilingMetadataParser extends ApplParser {
                 }
 
             } else if (eventType == XMLStreamReader.END_ELEMENT) {
-                if (xmlr.getLocalName() == "Products") {
+                if (xmlr.getLocalName().equals("Products")) {
                     if (this.addProducts) {
                         this.filing.put("products", this.products);
                     }
@@ -304,7 +553,7 @@ public class FilingMetadataParser extends ApplParser {
                     }
 
                 } else if (eventType == XMLStreamReader.END_ELEMENT) {
-                    if (xmlr.getLocalName() == "ForeignKeys") {
+                    if (xmlr.getLocalName().equals("ForeignKeys")) {
                         break;
                     }
                 }
