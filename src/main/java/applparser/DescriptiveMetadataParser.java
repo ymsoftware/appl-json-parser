@@ -48,7 +48,6 @@ public class DescriptiveMetadataParser extends ApplParser {
     private Map<String, Object> locationtype;
     private Number lat;
     private Number lon;
-    private boolean calculate;
     private Map<String, Map<String, Object>> audiences;
     private boolean addAudiences;
     private Map<String, Map<String, Object>> services;
@@ -57,10 +56,7 @@ public class DescriptiveMetadataParser extends ApplParser {
     private boolean geo;
     private List<Map<String, Object>> thirdpartymeta;
     private boolean addThirdPartyMeta;
-
-    public DescriptiveMetadataParser(Map<String, Object> map) {
-        this.calculate = map.containsKey("addConsumerReady");
-    }
+    private String supCatCode;
 
     @Override
     public void parse(String name, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
@@ -234,7 +230,7 @@ public class DescriptiveMetadataParser extends ApplParser {
             this.addThirdPartyMeta = false;
         }
 
-        if (!this.calculate) {
+        if (map.containsKey("addConsumerReady") && this.supCatCode != null && this.supCatCode.equalsIgnoreCase("v")) {
             map.remove("addConsumerReady");
         }
     }
@@ -331,6 +327,12 @@ public class DescriptiveMetadataParser extends ApplParser {
                 this.fixtureCode = 0;
             } else if (name != null) {
                 this.fixtureCode = Helpers.parseInteger(name);
+            }
+        } else if (authority.equalsIgnoreCase("AP Supplemental Category Code")) {
+            try {
+                this.supCatCode = xmlr.getElementText();
+            } catch (XMLStreamException e) {
+                e.printStackTrace();
             }
         }
     }

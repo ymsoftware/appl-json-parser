@@ -72,10 +72,10 @@ public class DocumentParser {
                             parser = new RightsMetadataParser();
                             break;
                         case "DescriptiveMetadata":
-                            parser = new DescriptiveMetadataParser(map);
+                            parser = new DescriptiveMetadataParser();
                             break;
                         case "FilingMetadata":
-                            parser = new FilingMetadataParser(map);
+                            parser = new FilingMetadataParser();
                             break;
                         case "PublicationComponent":
                             parser = new PublicationComponentParser();
@@ -99,11 +99,11 @@ public class DocumentParser {
                             parser = null;
                             break;
                         case "Publication":
-                            if (map.containsKey("addConsumerReady")){
+                            if (map.containsKey("addConsumerReady")) {
                                 if (map.containsKey("signals")) {
                                     List<String> signals = (List<String>) map.get("signals");
                                     signals.add("consumerready");
-                                    map.replace("signals",signals);
+                                    map.replace("signals", signals);
                                 } else {
                                     map.put("signals", new String[]{"consumerready"});
                                 }

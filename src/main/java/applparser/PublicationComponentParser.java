@@ -8,6 +8,8 @@ import java.util.Map;
  * Created by ymetelkin on 7/29/15.
  */
 public class PublicationComponentParser extends ApplParser {
+    //title: caption and main
+
     @Override
     public void parse(String name, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
 

@@ -479,6 +479,7 @@ public class DescriptiveMetadataTest {
     public void testThirdPartyMeta() throws IOException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
                 + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
+                + "<AdministrativeMetadata />"
                 + "<DescriptiveMetadata>"
                 + "<ThirdPartyMeta Vocabulary=\"v1\" VocabularyOwner=\"vo1\">"
                 + "<Occurrence Id=\"a1\" Value=\"Health\" />"
@@ -511,5 +512,10 @@ public class DescriptiveMetadataTest {
         assertEquals("v2", next.get("vocabulary").asText());
         assertEquals("vo1", next.get("vocabularyowner").asText());
         assertEquals("Health", next.get("name").asText());
+
+        JsonNode array = rootNode.get("signals");
+        assertEquals(true, array.isArray());
+        assertEquals(1, array.size());
+        assertEquals("consumerready", array.elements().next().asText());
     }
 }
