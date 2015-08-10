@@ -79,10 +79,10 @@ public class DocumentParser {
                             break;
                         case "PublicationComponent":
                             String role = xmlr.getAttributeValue("", "Role");
-                            if (role!=null){
+                            if (role != null) {
                                 String type = xmlr.getAttributeValue("", "MediaType");
-                                if (type!=null){
-                                    parser = new PublicationComponentParser(role.toLowerCase(), type.toLowerCase());
+                                if (type != null) {
+                                    parser = new PublicationComponentParser(role, type.toLowerCase(), map);
                                 }
                             }
                             break;
@@ -117,7 +117,7 @@ public class DocumentParser {
                                 map.remove("addConsumerReady");
                             }
 
-                            if (map.containsKey("addStateAudienece")){
+                            if (map.containsKey("addStateAudienece")) {
                                 map.remove("addStateAudienece");
                             }
                     }
@@ -127,6 +127,9 @@ public class DocumentParser {
             e.printStackTrace();
         }
 
+        if (map.containsKey("renditions")) {
+            map.replace("renditions", ((Map<String, Map<String, Object>>) map.get("renditions")).values());
+        }
 
         try {
             String json = pretty ? prettyMapper.writeValueAsString(map) : mapper.writeValueAsString(map);
