@@ -59,7 +59,6 @@ public class PublicationComponentParser extends ApplParser {
             this.title = new StringBuilder();
         }
     }
-    //title: caption and main
 
     @Override
     public void parse(String name, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
@@ -83,7 +82,7 @@ public class PublicationComponentParser extends ApplParser {
             } else if (type.equals("graphic")) {
 
             } else if (type.equals("audio")) {
-
+                setAudio(name, xmlr);
             } else if (type.equals("complexdata")) {
 
             }
@@ -187,7 +186,7 @@ public class PublicationComponentParser extends ApplParser {
 
     private void setPhoto(String content, XMLStreamReader xmlr) throws XMLStreamException {
         if (this.role.equals("main")) {
-            setPhoto(this.role, getContent(content, "Full Resolution (JPG)", xmlr), !this.mediaType.equals("photo"));
+            setRendition(this.role, getContent(content, "Full Resolution (JPG)", xmlr), !this.mediaType.equals("photo"));
         } else if (this.role.equals("preview")) {
             setPhoto("Preview", content, xmlr);
         } else if (this.role.equals("thumbnail")) {
@@ -201,15 +200,29 @@ public class PublicationComponentParser extends ApplParser {
 
     private void setPhoto(String title, String content, XMLStreamReader xmlr) throws XMLStreamException {
         if (this.mediaType.equals("video")) {
-            Map<String, Object> photo = getContent(content, "Photo", xmlr);
-            String name = this.role + getBinaryName(photo, null, true, true).replaceAll("-", "").replaceAll(" ", "").toLowerCase();
-            setPhoto(name, photo, true);
+            Map<String, Object> photo = getContent(content, title, xmlr);
+            String meta = getBinaryName(photo, null, true, true);
+            String name = this.role + meta.replaceAll("-", "").replaceAll(" ", "").toLowerCase();
+            title = String.format("%s (%s)", name, meta);
+            photo.replace("title", title);
+            setRendition(name, photo, true);
         } else {
-            setPhoto(this.role, getContent(content, title + " (JPG)", xmlr), false);
+            setRendition(this.role, getContent(content, title + " (JPG)", xmlr), false);
         }
     }
 
-    private void setPhoto(String name, Map<String, Object> photo, boolean multiple) {
+    private void setAudio(String content, XMLStreamReader xmlr) throws XMLStreamException {
+        if (this.role.equals("main")) {
+            Map<String, Object> audio = getContent(content, "Audio", xmlr);
+            String meta = getBinaryName(audio, null, false, false);
+            String name = "main" + meta.replaceAll("-", "").replaceAll(" ", "").toLowerCase();
+            String title = String.format("Full Resolution (%s)", meta);
+            audio.replace("title", title);
+            setRendition(name, audio, false);
+        }
+    }
+
+    private void setRendition(String name, Map<String, Object> rendition, boolean multiple) {
         if (multiple) {
             if (this.counts == null) {
                 this.counts = new HashMap<String, Integer>();
@@ -223,10 +236,10 @@ public class PublicationComponentParser extends ApplParser {
                 this.counts.put(name, 1);
             }
 
-            this.renditions.put(String.format("%s%d", name, count), photo);
+            this.renditions.put(String.format("%s%d", name, count), rendition);
         } else {
             if (!this.renditions.containsKey(name)) {
-                this.renditions.put(name, photo);
+                this.renditions.put(name, rendition);
             }
         }
     }
