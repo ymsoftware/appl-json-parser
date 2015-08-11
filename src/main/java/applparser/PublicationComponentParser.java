@@ -23,6 +23,10 @@ public class PublicationComponentParser extends ApplParser {
     private boolean needsHeadline;
     private Map<String, Integer> counts;
     private Map<String, Map<String, Object>> renditions;
+    private Map<String, Object> matte;
+    private List<Map<String, Object>> parts;
+    private String physicaltype;
+    private List<Integer> offsets;
 
     public PublicationComponentParser(String role, String type, Map<String, Object> map) {
         this.roleRaw = role;
@@ -78,13 +82,13 @@ public class PublicationComponentParser extends ApplParser {
                 setPhoto(name, xmlr);
 
             } else if (type.equals("video")) {
-
+                setVideo(name, xmlr);
             } else if (type.equals("graphic")) {
-
+                setGraphic(name, xmlr);
             } else if (type.equals("audio")) {
                 setAudio(name, xmlr);
             } else if (type.equals("complexdata")) {
-
+                setComplexData(name, xmlr);
             }
         }
     }
@@ -110,6 +114,15 @@ public class PublicationComponentParser extends ApplParser {
 
             if (this.renditions != null) {
                 map.replace("renditions", this.renditions);
+            }
+
+            if (this.parts != null) {
+                if (map.containsKey("parts")) {
+                    ((List<Map<String, Object>>) map.get("parts")).addAll(this.parts);
+                } else {
+                    map.put("parts", this.parts);
+                }
+                map.replace("parts", this.parts);
             }
         }
     }
@@ -191,7 +204,7 @@ public class PublicationComponentParser extends ApplParser {
             setPhoto("Preview", content, xmlr);
         } else if (this.role.equals("thumbnail")) {
             if (content.equals("PhotoCollectionContentItem")) {
-
+                setShots(content, xmlr);
             } else {
                 setPhoto("Thumbnail", content, xmlr);
             }
@@ -211,14 +224,170 @@ public class PublicationComponentParser extends ApplParser {
         }
     }
 
+    private void setShots(String content, XMLStreamReader xmlr) throws XMLStreamException {
+        this.offsets = null;
+        Map<String, Object> photo = getContent(content, "Offset", xmlr);
+        if (this.offsets != null && this.offsets.size() > 0) {
+            String url = photo.containsKey("basefilename") ? (String) photo.get("basefilename") : null;
+            String ext = null;
+            String sep = "/";
+            boolean isHref = false;
+            int zeros = 0;
+
+            if (url != null) {
+                char[] chars = url.toCharArray();
+
+                if (chars.length > 2) {
+                    for (int i = chars.length - 3; i > 0; i--) {
+                        if (chars[i] == '.') {
+                            ext = url.substring(i + 1);
+                            url = url.substring(0, i);
+                            break;
+                        }
+                    }
+                }
+
+                isHref = ext != null && ext.length() > 0;
+                if (isHref) {
+                    for (int i = chars.length - 1; i > 0; i--) {
+                        if (chars[i] == '0') {
+                            zeros += 1;
+                        } else {
+                            sep = url.substring(i + 1);
+                            url = url.substring(0, i);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            Integer duration = photo.containsKey("totalduration") ? (Integer) photo.get("totalduration") : null;
+
+            Integer[] offsets = this.offsets.stream().sorted().toArray(size -> new Integer[size]);
+            for (int i = 0; i < offsets.length; i++) {
+                Map<String, Object> shot = new LinkedHashMap<String, Object>();
+                shot.put("seq", i + 1);
+
+                String href = null;
+                if (isHref) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(i);
+                    while (sb.length() < zeros) {
+                        sb.insert(0, "0");
+                    }
+                    shot.put("href", String.format("%s%s%s%s", url, sep, sb, ext));
+                }
+
+
+            }
+
+
+        }
+    }
+
+    private void setVideo(String content, XMLStreamReader xmlr) throws XMLStreamException {
+        if (this.role.equals("main")) {
+            if (content.equals("VideoContentItem")) {
+                Map<String, Object> video = getContent(content, "Main", xmlr);
+                if (video.containsKey("fileextension")) {
+                    String ext = ((String) video.get("fileextension")).toUpperCase();
+                    if (!ext.equals("TXT")) {
+                        String file = "";
+                        if (video.containsKey("originalfilename")) {
+                            String url = (String) video.get("originalfilename");
+                            String[] tokens = url.split("_");
+                            file = tokens[tokens.length - 1].split(".")[0];
+                        }
+
+                        String meta = getBinaryName(video, null, true, true);
+                        String name = String.format("main%s%s", meta.replaceAll("-", "").replaceAll(" ", "").toLowerCase(), file);
+                        String title = String.format("Full Resolution (%s)", meta);
+                        video.replace("title", title);
+                        setRendition(name, video, true);
+                    }
+                }
+            } else if (content.equals("WebPartContentItem")) {
+                setRendition("mainweb", getContent(content, "Web", xmlr), true);
+            }
+        } else if (this.role.equals("physicalmain") && this.physicaltype != null) {
+            String name = this.physicaltype.replaceAll("-", "").replaceAll(" ", "").toLowerCase();
+            setRendition(name, getContent(content, this.physicaltype, xmlr), true);
+        } else if (this.role.equals("preview")) {
+            Map<String, Object> video = getContent(content, "Preview", xmlr);
+            String meta = getBinaryName(video, null, true, true);
+            String name = "preview" + meta.replaceAll("-", "").replaceAll(" ", "").toLowerCase();
+            String title = String.format("Preview (%s)", meta);
+            video.replace("title", title);
+            setRendition(name, video, true);
+        } else if (this.role.equals("thumbnail")) {
+            Map<String, Object> video = getContent(content, "Thumbnail", xmlr);
+            String meta = getBinaryName(video, null, true, true);
+            String name = "thumbnail" + meta.replaceAll("-", "").replaceAll(" ", "").toLowerCase();
+            String title = String.format("Thumbnail (%s)", meta);
+            video.replace("title", title);
+            setRendition(name, video, true);
+        }
+    }
+
     private void setAudio(String content, XMLStreamReader xmlr) throws XMLStreamException {
         if (this.role.equals("main")) {
-            Map<String, Object> audio = getContent(content, "Audio", xmlr);
+            Map<String, Object> audio = getContent(content, "Main", xmlr);
             String meta = getBinaryName(audio, null, false, false);
             String name = "main" + meta.replaceAll("-", "").replaceAll(" ", "").toLowerCase();
             String title = String.format("Full Resolution (%s)", meta);
             audio.replace("title", title);
             setRendition(name, audio, false);
+        }
+    }
+
+    private void setGraphic(String content, XMLStreamReader xmlr) throws XMLStreamException {
+        if (this.role.equals("main")) {
+            this.matte = null;
+
+            Map<String, Object> graphic = getContent(content, "Main", xmlr);
+
+            if (this.mediaType.equals("complexdata")) {
+                if (graphic.containsKey("presentationframelocation")) {
+                    String title = (String) graphic.get("presentationframelocation");
+                    graphic.replace("title", title);
+
+                    if (this.parts == null) {
+                        this.parts = new ArrayList<Map<String, Object>>();
+                    }
+                    this.parts.add(graphic);
+                }
+            } else {
+                String meta = getBinaryName(graphic, null, true, true);
+                String name = meta.replaceAll("-", "").replaceAll(" ", "").toLowerCase();
+                String title = String.format("Full Resolution (%s)", meta);
+                graphic.replace("title", title);
+                setRendition("main" + name, graphic, true);
+
+                if (this.matte != null) {
+                    title = String.format("Full Resolution Matte (%s)", meta);
+                    this.matte.replace("title", title);
+                    setRendition("mainmatte" + name, this.matte, true);
+                }
+            }
+        } else if (this.role.equals("preview")) {
+            setRendition(this.role, getContent(content, "Preview (JPG)", xmlr), false);
+        } else if (this.role.equals("thumbnail")) {
+            setRendition(this.role, getContent(content, "Thumbnail (JPG)", xmlr), false);
+        }
+    }
+
+    private void setComplexData(String content, XMLStreamReader xmlr) throws XMLStreamException {
+        if (this.role.equals("main")) {
+            Map<String, Object> complexdata = getContent(content, "Main", xmlr);
+            String meta = getBinaryName(complexdata, null, false, false);
+            String name = meta.replaceAll("-", "").replaceAll(" ", "").toLowerCase();
+            String title = String.format("Full Resolution (%s)", meta);
+            complexdata.replace("title", title);
+            setRendition(name, complexdata, false);
+        } else if (this.role.equals("preview")) {
+            setRendition(this.role, getContent(content, "Preview (JPG)", xmlr), false);
+        } else if (this.role.equals("thumbnail")) {
+            setRendition(this.role, getContent(content, "Thumbnail (JPG)", xmlr), false);
         }
     }
 
@@ -262,28 +431,35 @@ public class PublicationComponentParser extends ApplParser {
 
             if (eventType == XMLStreamReader.START_ELEMENT) {
                 String name = xmlr.getLocalName();
-                if (name.equals("ForeignKeys") && tapenumber == null && content.equals("VideoContentItem")) {
-                    String system = xmlr.getAttributeValue("", "System");
-                    if (system != null && system.equalsIgnoreCase("tape")) {
-                        while (xmlr.hasNext() && tapenumber == null) {
-                            xmlr.next();
+                if (name.equals("ForeignKeys")) {
+                    if (content.equals("WebPartContentItem")) {
+                        List<Map<String, Object>> foreignkeys = Helpers.getForeignKeys(xmlr);
+                        if (foreignkeys != null && foreignkeys.size() > 0) {
+                            map.put("foreignkeys", foreignkeys);
+                        }
+                    } else if (tapenumber == null && content.equals("VideoContentItem")) {
+                        String system = xmlr.getAttributeValue("", "System");
+                        if (system != null && system.equalsIgnoreCase("tape")) {
+                            while (xmlr.hasNext() && tapenumber == null) {
+                                xmlr.next();
 
-                            eventType = xmlr.getEventType();
-                            if (eventType == XMLStreamReader.START_ELEMENT) {
-                                if (xmlr.getLocalName().equals("Keys")) {
-                                    String field = xmlr.getAttributeValue("", "Field");
-                                    if (field != null && field.equalsIgnoreCase("number")) {
-                                        String id = xmlr.getAttributeValue("", "Id");
-                                        if (id != null) {
-                                            tapenumber = id;
-                                            map.put("tapenumber", id);
-                                            break;
+                                eventType = xmlr.getEventType();
+                                if (eventType == XMLStreamReader.START_ELEMENT) {
+                                    if (xmlr.getLocalName().equals("Keys")) {
+                                        String field = xmlr.getAttributeValue("", "Field");
+                                        if (field != null && field.equalsIgnoreCase("number")) {
+                                            String id = xmlr.getAttributeValue("", "Id");
+                                            if (id != null) {
+                                                tapenumber = id;
+                                                map.put("tapenumber", id);
+                                                break;
+                                            }
                                         }
                                     }
-                                }
-                            } else if (eventType == XMLStreamReader.END_ELEMENT) {
-                                if (xmlr.getLocalName().equals(name)) {
-                                    break;
+                                } else if (eventType == XMLStreamReader.END_ELEMENT) {
+                                    if (xmlr.getLocalName().equals(name)) {
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -313,6 +489,26 @@ public class PublicationComponentParser extends ApplParser {
                             }
                         }
                     }
+                } else if (name.equals("RelatedBinaries") && this.type.equals("graphic") && this.role.equals("main") && !this.mediaType.equals("complexdata")) {
+                    String attr = xmlr.getAttributeValue("", "Name");
+                    if (attr != null && attr.equalsIgnoreCase("MatteFileName")) {
+                        Map<String, Object> matte = new LinkedHashMap<String, Object>();
+                        matte.put("title", null);
+                        setAttributes(xmlr, matte);
+                        this.matte = matte;
+                    }
+                } else if (name.equals("PhysicalType") && this.type.equals("video") && this.role.equals("physicalmain") && content.equals("VideoContentItem")) {
+                    this.physicaltype = xmlr.getElementText();
+                } else if (name.equals("File") && content.equals("PhotoCollectionContentItem") && this.type.equals("photo")) {
+                    String attr = xmlr.getAttributeValue("", "TimeOffsetMilliseconds");
+                    Integer offset = attr == null ? 0 : Helpers.parseInteger(attr);
+                    if (this.offsets==null){
+                        this.offsets=new ArrayList<Integer>();
+                    }
+                    if (!this.offsets.contains(offset)){
+                        this.offsets.add(offset);
+                    }
+
                 } else if (name.equals("Characteristics")) {
                     setCharacteristics(xmlr, map);
                 }

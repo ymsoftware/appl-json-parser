@@ -1,5 +1,9 @@
 package applparser;
 
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -98,7 +102,7 @@ public class Helpers {
                 map.put(key, new ArrayList<String>());
             }
 
-            List<String> list = (List<String>)map.get(key);
+            List<String> list = (List<String>) map.get(key);
             if (!list.contains(value)) {
                 list.add(value);
             }
@@ -111,7 +115,7 @@ public class Helpers {
                 map.put(key, new ArrayList<String>());
             }
 
-            List<String> list = (List<String>)map.get(key);
+            List<String> list = (List<String>) map.get(key);
 
             for (String value : values) {
                 if (!list.contains(value)) {
@@ -135,5 +139,52 @@ public class Helpers {
                 map.put("creator", system);
             }
         }
+    }
+
+    public static List<Map<String, Object>> getForeignKeys(XMLStreamReader xmlr) throws XMLStreamException {
+        List<Map<String, Object>> foreignkeys = null;
+
+        String system = xmlr.getAttributeValue("", "System");
+        if (system != null) {
+            while (xmlr.hasNext()) {
+                xmlr.next();
+
+                int eventType = xmlr.getEventType();
+
+                if (eventType == XMLStreamReader.START_ELEMENT) {
+                    if (xmlr.getLocalName().equals("Keys")) {
+                        String id = xmlr.getAttributeValue("", "Id");
+                        if (id != null) {
+                            String field = xmlr.getAttributeValue("", "Field");
+                            if (field != null) {
+                                String name = (system + field).replaceAll(" ", "").toLowerCase();
+                                try {
+                                    name = URLEncoder.encode(name, "utf-8");
+
+                                    Map<String, Object> fk = new LinkedHashMap<String, Object>();
+                                    fk.put(name, id);
+
+                                    if (foreignkeys == null) {
+                                        foreignkeys = new ArrayList<Map<String, Object>>();
+                                    }
+
+                                    foreignkeys.add(fk);
+
+                                } catch (UnsupportedEncodingException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    }
+
+                } else if (eventType == XMLStreamReader.END_ELEMENT) {
+                    if (xmlr.getLocalName().equals("ForeignKeys")) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        return foreignkeys;
     }
 }

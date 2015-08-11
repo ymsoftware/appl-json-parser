@@ -517,46 +517,14 @@ public class FilingMetadataParser extends ApplParser {
     }
 
     private void addForeignKeys(XMLStreamReader xmlr) throws XMLStreamException {
-        String system = xmlr.getAttributeValue("", "System");
-        if (system != null) {
-            while (xmlr.hasNext()) {
-                xmlr.next();
-
-                int eventType = xmlr.getEventType();
-
-                if (eventType == XMLStreamReader.START_ELEMENT) {
-                    if (xmlr.getLocalName().equals("Keys")) {
-                        String id = xmlr.getAttributeValue("", "Id");
-                        if (id != null) {
-                            String field = xmlr.getAttributeValue("", "Field");
-                            if (field != null) {
-                                String name = (system + field).replaceAll(" ", "").toLowerCase();
-                                try {
-                                    name = URLEncoder.encode(name, "utf-8");
-
-                                    Map<String, Object> fk = new LinkedHashMap<String, Object>();
-                                    fk.put(name, id);
-
-                                    if (!this.addForeignKeys) {
-                                        this.addForeignKeys = true;
-                                        this.foreignkeys = new ArrayList<Map<String, Object>>();
-                                        this.filing.put("foreignkeys", null);
-                                    }
-
-                                    this.foreignkeys.add(fk);
-
-                                } catch (UnsupportedEncodingException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }
-                    }
-
-                } else if (eventType == XMLStreamReader.END_ELEMENT) {
-                    if (xmlr.getLocalName().equals("ForeignKeys")) {
-                        break;
-                    }
-                }
+        List<Map<String, Object>> foreignkeys = Helpers.getForeignKeys(xmlr);
+        if (foreignkeys != null && foreignkeys.size() > 0) {
+            if (this.addForeignKeys) {
+                this.foreignkeys.addAll(foreignkeys);
+            } else {
+                this.addForeignKeys = true;
+                this.foreignkeys = foreignkeys;
+                this.filing.put("foreignkeys", null);
             }
         }
     }
