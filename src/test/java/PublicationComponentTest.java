@@ -163,4 +163,59 @@ public class PublicationComponentTest {
         assertEquals(40, rendition.get("width").asInt());
         assertEquals(20, rendition.get("height").asInt());
     }
+
+    @Test
+    public void testShots() throws IOException {
+        String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+                + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
+                + "<Identification>"
+                + "<MediaType>Photo</MediaType>"
+                + "</Identification>"
+                + "<AdministrativeMetadata />"
+                + "<NewsLines />"
+                + "<DescriptiveMetadata />"
+                + "<PublicationComponent Role=\"Thumbnail\" MediaType=\"Photo\">"
+                + "<PhotoCollectionContentItem Id=\"p1\" Href=\"/p1\" BinaryPath=\"File\" BaseFileName=\"http://ap.org/thumbnails/1/1_index/0000.jpg\"  PrimaryFileName=\"http://ap.org/thumbnails/1/1_tmb/0000.jpg\">"
+                + "<File TimeOffsetMilliseconds=\"360\"></File>"
+                + "<File TimeOffsetMilliseconds=\"4360\"></File>"
+                + "<File TimeOffsetMilliseconds=\"9000\"></File>"
+                + "<File TimeOffsetMilliseconds=\"12300\"></File>"
+                + "<Characteristics MimeType=\"image/jpeg\" Format=\"JPEG Baseline\" FileExtension=\"jpg\" SizeInBytes=\"800\">"
+                + "<Width>40</Width>"
+                + "<Height>20</Height>"
+                + "<TotalDuration>15300</TotalDuration>"
+                + "</Characteristics>"
+                + "</PhotoCollectionContentItem>"
+                + "</PublicationComponent>"
+                + "</Publication>";
+
+        DocumentParser parser = new DocumentParser();
+        String json = parser.parse(appl);
+
+        ObjectMapper m = new ObjectMapper();
+        JsonNode rootNode = m.readTree(json);
+        JsonNode testNode = rootNode.path("renditions");
+        assertEquals(true, testNode.isArray());
+        assertEquals(3, testNode.size());
+
+        Iterator<JsonNode> renditions = testNode.elements();
+
+        JsonNode rendition = renditions.next();
+        assertEquals("Full Resolution (JPG)", rendition.get("title").asText());
+        assertEquals(4000, rendition.get("width").asInt());
+        assertEquals(2000, rendition.get("height").asInt());
+        assertEquals("s1", rendition.get("presentationsystem").asText());
+        assertEquals("f1", rendition.get("presentationframe").asText());
+        assertEquals("fl1", rendition.get("presentationframelocation").asText());
+
+        rendition = renditions.next();
+        assertEquals("Preview (JPG)", rendition.get("title").asText());
+        assertEquals(400, rendition.get("width").asInt());
+        assertEquals(200, rendition.get("height").asInt());
+
+        rendition = renditions.next();
+        assertEquals("Thumbnail (JPG)", rendition.get("title").asText());
+        assertEquals(40, rendition.get("width").asInt());
+        assertEquals(20, rendition.get("height").asInt());
+    }
 }

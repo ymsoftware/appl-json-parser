@@ -45,6 +45,17 @@ public class Helpers {
         return null;
     }
 
+    public static Long parseLong(String value) {
+        try {
+            if (value != null) {
+                return Long.parseUnsignedLong(value);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public static Number parseNumber(String value) {
         try {
             if (value != null) {

@@ -2,6 +2,7 @@ package applparser;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -26,7 +27,8 @@ public class PublicationComponentParser extends ApplParser {
     private Map<String, Object> matte;
     private List<Map<String, Object>> parts;
     private String physicaltype;
-    private List<Integer> offsets;
+    private List<Long> offsets;
+    private List<Map<String, Object>> shots;
 
     public PublicationComponentParser(String role, String type, Map<String, Object> map) {
         this.roleRaw = role;
@@ -71,16 +73,8 @@ public class PublicationComponentParser extends ApplParser {
                 setText(xmlr);
             }
         } else {
-            if (!map.containsKey("renditions")) {
-                map.put("renditions", new LinkedHashMap<String, Map<String, Object>>());
-            }
-
-            this.renditions = (Map<String, Map<String, Object>>) map.get("renditions");
-
-
             if (type.equals("photo")) {
                 setPhoto(name, xmlr);
-
             } else if (type.equals("video")) {
                 setVideo(name, xmlr);
             } else if (type.equals("graphic")) {
@@ -100,29 +94,40 @@ public class PublicationComponentParser extends ApplParser {
             text.put("nitf", this.text.toString());
             if (this.words != null) text.put("words", this.words);
             map.put(this.role, text);
+        }
 
-            if (this.title != null) {
-                String title = this.title.toString().trim().replace("  ", " ");
-                String[] tokens = title.split(" ");
-                if (tokens.length > 10) {
-                    title = Arrays.stream(tokens).limit(10).collect(Collectors.joining(" "));
-                }
-
-                if (this.needsTitle) map.replace("title", title);
-                if (this.needsHeadline) map.replace("headline", title);
+        if (this.title != null) {
+            String title = this.title.toString().trim().replace("  ", " ");
+            String[] tokens = title.split(" ");
+            if (tokens.length > 10) {
+                title = Arrays.stream(tokens).limit(10).collect(Collectors.joining(" "));
             }
 
-            if (this.renditions != null) {
-                map.replace("renditions", this.renditions);
-            }
+            if (this.needsTitle) map.replace("title", title);
+            if (this.needsHeadline) map.replace("headline", title);
+        }
 
-            if (this.parts != null) {
-                if (map.containsKey("parts")) {
-                    ((List<Map<String, Object>>) map.get("parts")).addAll(this.parts);
-                } else {
-                    map.put("parts", this.parts);
-                }
-                map.replace("parts", this.parts);
+        if (this.renditions != null) {
+            if (map.containsKey("renditions")) {
+                ((Map<String, Map<String, Object>>) map.get("renditions")).putAll(this.renditions);
+            } else {
+                map.put("renditions", this.renditions);
+            }
+        }
+
+        if (this.parts != null) {
+            if (map.containsKey("parts")) {
+                ((List<Map<String, Object>>) map.get("parts")).addAll(this.parts);
+            } else {
+                map.put("parts", this.parts);
+            }
+        }
+
+        if (this.shots != null) {
+            if (map.containsKey("shots")) {
+                ((List<Map<String, Object>>) map.get("shots")).addAll(this.shots);
+            } else {
+                map.put("shots", this.shots);
             }
         }
     }
@@ -226,8 +231,12 @@ public class PublicationComponentParser extends ApplParser {
 
     private void setShots(String content, XMLStreamReader xmlr) throws XMLStreamException {
         this.offsets = null;
+
         Map<String, Object> photo = getContent(content, "Offset", xmlr);
+
         if (this.offsets != null && this.offsets.size() > 0) {
+            this.shots = new ArrayList<Map<String, Object>>();
+
             String url = photo.containsKey("basefilename") ? (String) photo.get("basefilename") : null;
             String ext = null;
             String sep = "/";
@@ -249,11 +258,12 @@ public class PublicationComponentParser extends ApplParser {
 
                 isHref = ext != null && ext.length() > 0;
                 if (isHref) {
+                    chars = url.toCharArray();
                     for (int i = chars.length - 1; i > 0; i--) {
                         if (chars[i] == '0') {
                             zeros += 1;
                         } else {
-                            sep = url.substring(i + 1);
+                            sep = url.substring(i, i + 1);
                             url = url.substring(0, i);
                             break;
                         }
@@ -261,9 +271,12 @@ public class PublicationComponentParser extends ApplParser {
                 }
             }
 
-            Integer duration = photo.containsKey("totalduration") ? (Integer) photo.get("totalduration") : null;
+            Long duration = photo.containsKey("totalduration") ? (Long) photo.get("totalduration") : null;
+            if (duration == null) duration = 0l;
 
-            Integer[] offsets = this.offsets.stream().sorted().toArray(size -> new Integer[size]);
+            String start = null, end = null;
+
+            Long[] offsets = this.offsets.stream().sorted().toArray(size -> new Long[size]);
             for (int i = 0; i < offsets.length; i++) {
                 Map<String, Object> shot = new LinkedHashMap<String, Object>();
                 shot.put("seq", i + 1);
@@ -275,13 +288,30 @@ public class PublicationComponentParser extends ApplParser {
                     while (sb.length() < zeros) {
                         sb.insert(0, "0");
                     }
-                    shot.put("href", String.format("%s%s%s%s", url, sep, sb, ext));
+                    shot.put("href", String.format("%s%s%s.%s", url, sep, sb, ext));
                 }
 
+                if (photo.containsKey("width")) {
+                    shot.put("width", photo.get("width"));
+                }
 
+                if (photo.containsKey("height")) {
+                    shot.put("height", photo.get("height"));
+                }
+
+                if (end == null) {
+                    start = formatTime(offsets[i]);
+                } else {
+                    start = end;
+                }
+                end = i < offsets.length - 1 ? formatTime(offsets[i + 1]) : formatTime(duration);
+
+                shot.put("start", start);
+                shot.put("end", end);
+                shot.put("timeunit", "normalplaytime");
+
+                this.shots.add(shot);
             }
-
-
         }
     }
 
@@ -392,6 +422,9 @@ public class PublicationComponentParser extends ApplParser {
     }
 
     private void setRendition(String name, Map<String, Object> rendition, boolean multiple) {
+        if (this.renditions == null) {
+            this.renditions = new LinkedHashMap<String, Map<String, Object>>();
+        }
         if (multiple) {
             if (this.counts == null) {
                 this.counts = new HashMap<String, Integer>();
@@ -501,11 +534,11 @@ public class PublicationComponentParser extends ApplParser {
                     this.physicaltype = xmlr.getElementText();
                 } else if (name.equals("File") && content.equals("PhotoCollectionContentItem") && this.type.equals("photo")) {
                     String attr = xmlr.getAttributeValue("", "TimeOffsetMilliseconds");
-                    Integer offset = attr == null ? 0 : Helpers.parseInteger(attr);
-                    if (this.offsets==null){
-                        this.offsets=new ArrayList<Integer>();
+                    Long offset = attr == null ? 0 : Helpers.parseLong(attr);
+                    if (this.offsets == null) {
+                        this.offsets = new ArrayList<Long>();
                     }
-                    if (!this.offsets.contains(offset)){
+                    if (!this.offsets.contains(offset)) {
                         this.offsets.add(offset);
                     }
 
@@ -615,5 +648,30 @@ public class PublicationComponentParser extends ApplParser {
         }
 
         return sb.toString().trim();
+    }
+
+    private String formatTime(Long ms) {
+        long second = 0;
+        long minute = 0;
+        long hour = 0;
+
+        second = (ms / 1000) % 60;
+
+        if (second > 0) {
+            ms -= second * 1000;
+
+            minute = (ms / (1000 * 60)) % 60;
+            if (minute > 0) {
+                ms -= minute * 60 * 1000;
+
+                hour = (ms / (1000 * 60 * 60)) % 24;
+                if (hour > 0) {
+                    ms -= hour * 24 * 60 * 1000;
+                }
+            }
+        }
+
+        String time = String.format("%02d:%02d:%02d:%03d", hour, minute, second, ms);
+        return time;
     }
 }
