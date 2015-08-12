@@ -3,6 +3,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 
+import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
@@ -12,7 +13,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class NewsLinesTest {
     @Test
-    public void test() throws IOException {
+    public void test() throws IOException, XMLStreamException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
                 + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<Identification>"
@@ -73,14 +74,14 @@ public class NewsLinesTest {
         assertEquals(2, testNode.size());
         assertEquals("KeywordLine 1", testNode.elements().next().asText());
 
-        testNode = rootNode.path("person");
+        testNode = rootNode.path("persons");
         assertEquals(true, testNode.isArray());
         assertEquals(1, testNode.size());
         assertEquals("YM", testNode.elements().next().get("name").asText());
     }
 
     @Test
-    public void testHeadlineAndTitle() throws IOException {
+    public void testHeadlineAndTitle() throws IOException, XMLStreamException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
                 + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<Identification>"
@@ -173,7 +174,7 @@ public class NewsLinesTest {
     }
 
     @Test
-    public void testBylines() throws IOException {
+    public void testBylines() throws IOException, XMLStreamException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
                 + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<NewsLines>"

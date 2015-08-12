@@ -62,7 +62,7 @@ public class Helpers {
                 if (value.contains(".")) {
                     return value.length() > 7 ? Double.parseDouble(value) : Float.parseFloat(value);
                 } else {
-                    return value.length() > 9 ? Long.parseUnsignedLong(value) : Integer.parseUnsignedInt(value);
+                    return value.length() > 9 ? Long.parseLong(value) : Integer.parseInt(value);
                 }
             }
         } catch (Exception e) {

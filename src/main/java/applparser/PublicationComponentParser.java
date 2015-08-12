@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
  */
 public class PublicationComponentParser extends ApplParser {
     private String role;
-    private String roleRaw;
     private String type;
     private String mediaType;
     private StringBuilder text;
@@ -31,8 +30,7 @@ public class PublicationComponentParser extends ApplParser {
     private List<Map<String, Object>> shots;
 
     public PublicationComponentParser(String role, String type, Map<String, Object> map) {
-        this.roleRaw = role;
-        this.role = role.toLowerCase();
+        this.role = role;
         this.type = type;
         this.mediaType = map.containsKey("type") ? (String) map.get("type") : "text";
 
@@ -142,6 +140,9 @@ public class PublicationComponentParser extends ApplParser {
                 String name = xmlr.getLocalName();
 
                 if (this.readText) {
+                    if (xmlr.isStandalone()){
+                        String debug = "";
+                    }
                     this.text.append("<").append(name);
 
                     for (int i = 0; i < xmlr.getAttributeCount(); i++) {

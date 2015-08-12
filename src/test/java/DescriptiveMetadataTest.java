@@ -3,6 +3,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 
+import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
 import java.util.Iterator;
 
@@ -13,7 +14,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class DescriptiveMetadataTest {
     @Test
-    public void testDateLineLocation() throws IOException {
+    public void testDateLineLocation() throws IOException, XMLStreamException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
                 + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<DescriptiveMetadata>"
@@ -48,7 +49,7 @@ public class DescriptiveMetadataTest {
     }
 
     @Test
-    public void testGenerators() throws IOException {
+    public void testGenerators() throws IOException, XMLStreamException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
                 + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<DescriptiveMetadata>"
@@ -89,7 +90,7 @@ public class DescriptiveMetadataTest {
     }
 
     @Test
-    public void testSubjects() throws IOException {
+    public void testSubjects() throws IOException, XMLStreamException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
                 + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<DescriptiveMetadata>"
@@ -138,7 +139,7 @@ public class DescriptiveMetadataTest {
         next = elements.next();
         assertEquals("a2", next.get("code").asText());
 
-        testNode = rootNode.path("subcategories");
+        testNode = rootNode.path("suppcategories");
         assertEquals(true, testNode.isArray());
         assertEquals(2, testNode.size());
 
@@ -195,7 +196,7 @@ public class DescriptiveMetadataTest {
     }
 
     @Test
-    public void testEntitiess() throws IOException {
+    public void testEntitiess() throws IOException, XMLStreamException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
                 + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<DescriptiveMetadata>"
@@ -396,7 +397,7 @@ public class DescriptiveMetadataTest {
     }
 
     @Test
-    public void testAudiences() throws IOException {
+    public void testAudiences() throws IOException, XMLStreamException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
                 + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<DescriptiveMetadata>"
@@ -437,7 +438,7 @@ public class DescriptiveMetadataTest {
     }
 
     @Test
-    public void testServices() throws IOException {
+    public void testServices() throws IOException, XMLStreamException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
                 + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<DescriptiveMetadata>"
@@ -476,7 +477,7 @@ public class DescriptiveMetadataTest {
     }
 
     @Test
-    public void testThirdPartyMeta() throws IOException {
+    public void testThirdPartyMeta() throws IOException, XMLStreamException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
                 + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<AdministrativeMetadata />"

@@ -3,6 +3,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 
+import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
 import java.util.Iterator;
 
@@ -13,7 +14,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class PublicationComponentTest {
     @Test
-    public void testText() throws IOException {
+    public void testText() throws IOException, XMLStreamException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
                 + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<AdministrativeMetadata />"
@@ -81,7 +82,7 @@ public class PublicationComponentTest {
     }
 
     @Test
-    public void testPhoto() throws IOException {
+    public void testPhoto() throws IOException, XMLStreamException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
                 + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<Identification>"
@@ -165,7 +166,7 @@ public class PublicationComponentTest {
     }
 
     @Test
-    public void testShots() throws IOException {
+    public void testShots() throws IOException, XMLStreamException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
                 + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<Identification>"
@@ -194,27 +195,21 @@ public class PublicationComponentTest {
 
         ObjectMapper m = new ObjectMapper();
         JsonNode rootNode = m.readTree(json);
-        JsonNode testNode = rootNode.path("renditions");
+        JsonNode testNode = rootNode.path("shots");
         assertEquals(true, testNode.isArray());
-        assertEquals(3, testNode.size());
+        assertEquals(4, testNode.size());
 
         Iterator<JsonNode> renditions = testNode.elements();
 
         JsonNode rendition = renditions.next();
-        assertEquals("Full Resolution (JPG)", rendition.get("title").asText());
-        assertEquals(4000, rendition.get("width").asInt());
-        assertEquals(2000, rendition.get("height").asInt());
-        assertEquals("s1", rendition.get("presentationsystem").asText());
-        assertEquals("f1", rendition.get("presentationframe").asText());
-        assertEquals("fl1", rendition.get("presentationframelocation").asText());
+        assertEquals(1, rendition.get("seq").asInt());
+        assertEquals("http://ap.org/thumbnails/1/1_index/0000.jpg", rendition.get("href").asText());
+        assertEquals(40, rendition.get("width").asInt());
+        assertEquals(20, rendition.get("height").asInt());
 
         rendition = renditions.next();
-        assertEquals("Preview (JPG)", rendition.get("title").asText());
-        assertEquals(400, rendition.get("width").asInt());
-        assertEquals(200, rendition.get("height").asInt());
-
-        rendition = renditions.next();
-        assertEquals("Thumbnail (JPG)", rendition.get("title").asText());
+        assertEquals(2, rendition.get("seq").asInt());
+        assertEquals("http://ap.org/thumbnails/1/1_index/0001.jpg", rendition.get("href").asText());
         assertEquals(40, rendition.get("width").asInt());
         assertEquals(20, rendition.get("height").asInt());
     }

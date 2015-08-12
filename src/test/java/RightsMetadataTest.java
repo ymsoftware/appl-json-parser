@@ -3,6 +3,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 
+import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Iterator;
@@ -14,7 +15,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class RightsMetadataTest {
     @Test
-    public void testCopyrights() throws IOException {
+    public void testCopyrights() throws IOException, XMLStreamException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
                 + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<NewsLines>"
@@ -102,7 +103,7 @@ public class RightsMetadataTest {
     }
 
     @Test
-    public void testUsageRights() throws IOException {
+    public void testUsageRights() throws IOException, XMLStreamException {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
                 + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<RightsMetadata>"

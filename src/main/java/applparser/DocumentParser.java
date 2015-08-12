@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
 import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.io.StringReader;
 import java.util.*;
@@ -33,115 +34,113 @@ public class DocumentParser {
 //        prettyMapper.registerModule(module);
     }
 
-    public String parse(String appl, boolean pretty) {
+    public String parse(String appl, boolean pretty) throws JsonProcessingException, XMLStreamException {
         Map<String, Object> map = new LinkedHashMap<String, Object>();
         map.put("representationversion", "1.0");
         map.put("representationtype", "full");
 
-        try {
-            XMLInputFactory factory = XMLInputFactory.newInstance();
+        XMLInputFactory factory = XMLInputFactory.newInstance();
 
-            XMLStreamReader xmlr = factory.createXMLStreamReader(new StringReader(appl));
+        XMLStreamReader xmlr = factory.createXMLStreamReader(new StringReader(appl));
 
-            ApplParser parser = null;
+        ApplParser parser = null;
 
-            while (xmlr.hasNext()) {
-                xmlr.next();
+        while (xmlr.hasNext()) {
+            xmlr.next();
 
-                int eventType = xmlr.getEventType();
+            int eventType = xmlr.getEventType();
 
-                if (eventType == XMLStreamReader.START_ELEMENT) {
-                    String name = xmlr.getLocalName();
+            if (eventType == XMLStreamReader.START_ELEMENT) {
+                String name = xmlr.getLocalName();
 
-                    switch (name) {
-                        case "Publication":
-                            break; // ignore root
-                        case "Identification":
-                            parser = new IdentificationParser();
-                            break;
-                        case "PublicationManagement":
-                            parser = new PublicationManagementParser();
-                            break;
-                        case "NewsLines":
-                            parser = new NewsLinesParser(map);
-                            break;
-                        case "AdministrativeMetadata":
-                            parser = new AdministrativeMetadataParser();
-                            break;
-                        case "RightsMetadata":
-                            parser = new RightsMetadataParser();
-                            break;
-                        case "DescriptiveMetadata":
-                            parser = new DescriptiveMetadataParser();
-                            break;
-                        case "FilingMetadata":
-                            parser = new FilingMetadataParser();
-                            break;
-                        case "PublicationComponent":
-                            String role = xmlr.getAttributeValue("", "Role");
-                            if (role != null) {
-                                String type = xmlr.getAttributeValue("", "MediaType");
-                                if (type != null) {
-                                    parser = new PublicationComponentParser(role, type.toLowerCase(), map);
-                                }
+                switch (name) {
+                    case "Publication":
+                        break; // ignore root
+                    case "Identification":
+                        parser = new IdentificationParser();
+                        break;
+                    case "PublicationManagement":
+                        parser = new PublicationManagementParser();
+                        break;
+                    case "NewsLines":
+                        parser = new NewsLinesParser(map);
+                        break;
+                    case "AdministrativeMetadata":
+                        parser = new AdministrativeMetadataParser();
+                        break;
+                    case "RightsMetadata":
+                        parser = new RightsMetadataParser();
+                        break;
+                    case "DescriptiveMetadata":
+                        parser = new DescriptiveMetadataParser();
+                        break;
+                    case "FilingMetadata":
+                        parser = new FilingMetadataParser();
+                        break;
+                    case "PublicationComponent":
+                        String role = xmlr.getAttributeValue("", "Role");
+                        if (role != null) {
+                            String type = xmlr.getAttributeValue("", "MediaType");
+                            if (type != null) {
+                                parser = new PublicationComponentParser(role.toLowerCase(), type.toLowerCase(), map);
                             }
-                            break;
-                        default:
-                            if (parser != null) {
-                                parser.parse(name, xmlr, map);
-                            }
-                    }
-                } else if (eventType == XMLStreamReader.END_ELEMENT) {
-                    switch (xmlr.getLocalName()) {
-                        case "Identification":
-                        case "PublicationManagement":
-                        case "NewsLines":
-                        case "AdministrativeMetadata":
-                        case "RightsMetadata":
-                        case "DescriptiveMetadata":
-                        case "FilingMetadata":
-                        case "PublicationComponent":
-                            parser.cleanup(map);
-                            parser = null;
-                            break;
-                        case "Publication":
-                            if (map.containsKey("addConsumerReady")) {
-                                if (map.containsKey("signals")) {
-                                    List<String> signals = (List<String>) map.get("signals");
-                                    signals.add("consumerready");
-                                    map.replace("signals", signals);
-                                } else {
-                                    map.put("signals", new String[]{"consumerready"});
-                                }
-
-                                map.remove("addConsumerReady");
+                        }
+                        break;
+                    default:
+                        if (parser != null) {
+                            parser.parse(name, xmlr, map);
+                        }
+                }
+            } else if (eventType == XMLStreamReader.END_ELEMENT) {
+                switch (xmlr.getLocalName()) {
+                    case "Identification":
+                    case "PublicationManagement":
+                    case "NewsLines":
+                    case "AdministrativeMetadata":
+                    case "RightsMetadata":
+                    case "DescriptiveMetadata":
+                    case "FilingMetadata":
+                    case "PublicationComponent":
+                        parser.cleanup(map);
+                        parser = null;
+                        break;
+                    case "Publication":
+                        if (map.containsKey("addConsumerReady")) {
+                            if (map.containsKey("signals")) {
+                                List<String> signals = (List<String>) map.get("signals");
+                                signals.add("consumerready");
+                                map.replace("signals", signals);
+                            } else {
+                                map.put("signals", new String[]{"consumerready"});
                             }
 
-                            if (map.containsKey("addStateAudienece")) {
-                                map.remove("addStateAudienece");
+                            map.remove("addConsumerReady");
+                        }
+
+                        if (map.containsKey("addStateAudienece")) {
+                            map.remove("addStateAudienece");
+                        }
+
+                        for (String key : new String[]{"copyrightholder", "copyrightdate"}) {
+                            if (map.containsKey(key) && map.get(key) == null) {
+                                map.remove(key);
                             }
-                    }
+                        }
+
+                        if (map.containsKey("renditions")) {
+                            map.replace("renditions", ((Map<String, Map<String, Object>>) map.get("renditions")).values());
+                        }
+
+                        break;
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
 
-        if (map.containsKey("renditions")) {
-            map.replace("renditions", ((Map<String, Map<String, Object>>) map.get("renditions")).values());
-        }
-
-        try {
-            String json = pretty ? prettyMapper.writeValueAsString(map) : mapper.writeValueAsString(map);
-            return json;
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
-
-        return null;
+        String json = pretty ? prettyMapper.writeValueAsString(map) : mapper.writeValueAsString(map);
+        return json;
     }
 
-    public String parse(String appl) {
+    public String parse(String appl) throws JsonProcessingException, XMLStreamException {
         return parse(appl, true);
     }
 }

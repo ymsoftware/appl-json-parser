@@ -14,8 +14,8 @@ public class DescriptiveMetadataParser extends ApplParser {
     private boolean addGenerators;
     private List<Map<String, Object>> categories;
     private boolean addCategories;
-    private List<Map<String, Object>> subcategories;
-    private boolean addSubcategories;
+    private List<Map<String, Object>> suppcategories;
+    private boolean addSuppCategories;
     private List<String> alertcategories;
     private boolean addAlertcategories;
     private Map<String, Map<String, Object>> subjects;
@@ -171,9 +171,9 @@ public class DescriptiveMetadataParser extends ApplParser {
             map.replace("categories", null, this.categories);
             this.addCategories = false;
         }
-        if (this.addSubcategories) {
-            map.replace("subcategories", null, this.subcategories);
-            this.addSubcategories = false;
+        if (this.addSuppCategories) {
+            map.replace("suppcategories", null, this.suppcategories);
+            this.addSuppCategories = false;
         }
         if (this.addAlertcategories) {
             map.replace("alertcategories", null, this.alertcategories);
@@ -202,7 +202,12 @@ public class DescriptiveMetadataParser extends ApplParser {
             this.addCompanies = false;
         }
         if (this.addPersons) {
-            map.replace("persons", null, this.persons.values());
+            if (map.containsKey("persons")) {
+                ((Collection<Map<String, Object>>)map.get("persons")).addAll(this.persons.values());
+            }
+            else{
+                map.put("persons", this.persons.values());
+            }
             this.addPersons = false;
         }
         if (this.addPlaces) {
@@ -295,13 +300,13 @@ public class DescriptiveMetadataParser extends ApplParser {
         } else if (authority.equalsIgnoreCase("AP Supplemental Category Code")) {
             Map<String, Object> category = Helpers.getCodeNameObject(code, name);
             if (category != null) {
-                if (!this.addSubcategories) {
-                    this.addSubcategories = true;
-                    this.subcategories = new ArrayList<Map<String, Object>>();
-                    map.put("subcategories", null);
+                if (!this.addSuppCategories) {
+                    this.addSuppCategories = true;
+                    this.suppcategories = new ArrayList<Map<String, Object>>();
+                    map.put("suppcategories", null);
                 }
 
-                this.subcategories.add(category);
+                this.suppcategories.add(category);
             }
         } else if (authority.equalsIgnoreCase("AP Alert Category")) {
             if (code != null) {
@@ -367,7 +372,6 @@ public class DescriptiveMetadataParser extends ApplParser {
 
                     if (person != null && !this.addPersons) {
                         this.addPersons = true;
-                        map.put("persons", null);
                     }
                 } else if (authority.equalsIgnoreCase("AP Organization")) {
                     if (this.organizations == null)

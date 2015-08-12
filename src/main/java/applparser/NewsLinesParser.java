@@ -2,10 +2,7 @@ package applparser;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by ymetelkin on 7/28/15.
@@ -28,8 +25,8 @@ public class NewsLinesParser extends ApplParser {
     private boolean addOverlines;
     private List<String> keywordlines;
     private boolean addKeywordlines;
-    private List<Map<String, Object>> person;
-    private boolean addPerson;
+    private List<Map<String, Object>> persons;
+    private boolean addPersons;
     private boolean summary;
 
     public NewsLinesParser(Map<String, Object> map) {
@@ -79,6 +76,10 @@ public class NewsLinesParser extends ApplParser {
                 if (id != null) {
                     map.put("creditlineid", id);
                 }
+                String text = xmlr.getElementText();
+                if (text != null && text.length() > 0) {
+                    map.put("creditline", text);
+                }
                 break;
             case "CopyrightLine":
                 map.put("copyrightnotice", xmlr.getElementText());
@@ -127,9 +128,14 @@ public class NewsLinesParser extends ApplParser {
             this.addKeywordlines = false;
         }
 
-        if (this.addPerson) {
-            map.replace("person", null, this.person);
-            this.addPerson = false;
+        if (this.addPersons) {
+            if (map.containsKey("persons")) {
+                ((Collection<Map<String, Object>>)map.get("person")).addAll(this.persons);
+            }
+            else{
+                map.put("persons", this.persons);
+            }
+            this.addPersons = false;
         }
     }
 
@@ -223,7 +229,7 @@ public class NewsLinesParser extends ApplParser {
         }
 
         String title = xmlr.getAttributeValue("", "Title");
-        boolean producer = title.equalsIgnoreCase("EditedBy");
+        boolean producer = title != null && title.equalsIgnoreCase("EditedBy");
 
         String parametric = xmlr.getAttributeValue("", "Parametric");
         boolean photographer = parametric != null && parametric.equalsIgnoreCase("photographer");
@@ -335,17 +341,16 @@ public class NewsLinesParser extends ApplParser {
     }
 
     private void setPerson(String name, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
-        if (this.person == null) {
-            this.person = new ArrayList<Map<String, Object>>();
+        if (this.persons == null) {
+            this.persons = new ArrayList<Map<String, Object>>();
         }
 
         String parametric = xmlr.getAttributeValue("", "Parametric");
         if (parametric != null && parametric.equalsIgnoreCase("PERSON_FEATURED")) {
             String text = xmlr.getElementText();
             if (text != null) {
-                if (!this.addPerson) {
-                    map.put("person", null);
-                    this.addPerson = true;
+                if (!this.addPersons) {
+                    this.addPersons = true;
                 }
 
                 Map<String, Object> person = new LinkedHashMap<String, Object>();
@@ -353,7 +358,7 @@ public class NewsLinesParser extends ApplParser {
                 person.put("rel", new String[]{"personfeatured"});
                 person.put("creator", "Editorial");
 
-                this.person.add(person);
+                this.persons.add(person);
             }
         }
     }

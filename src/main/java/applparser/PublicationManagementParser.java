@@ -61,8 +61,8 @@ public class PublicationManagementParser extends ApplParser {
             case "Instruction":
                 setInstructions(name, xmlr, map);
                 break;
-            case "TimeRestrictions":
-                setTimeRestrictions(name, xmlr, map);
+            case "TimeRestriction":
+                setTimeRestriction(name, xmlr, map);
                 break;
             case "ExplicitWarning":
                 setSignal("explicitcontent", "1", xmlr, map);
@@ -253,7 +253,7 @@ public class PublicationManagementParser extends ApplParser {
         }
     }
 
-    private void setTimeRestrictions(String name, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
+    private void setTimeRestriction(String name, XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
         if (this.timeRestrictions == null) {
             this.timeRestrictions = new ArrayList<Map<String, Object>>();
             this.include = new HashMap<String, Boolean>();
@@ -267,20 +267,25 @@ public class PublicationManagementParser extends ApplParser {
 
         String key = String.format("%s%s", system, zone).toLowerCase();
         if (key.length() > 0) {
-            if (!this.addTimeRestrictions) {
-                map.put("timerestrictions", null);
-                this.addTimeRestrictions = true;
-            }
-
-            if (!this.include.containsKey(key)) {
+            if (!map.containsKey(key)){
                 String include = xmlr.getAttributeValue("", "Include");
-                Boolean isInclude = include.equalsIgnoreCase("true");
-                this.include.put(key, isInclude);
-
-                Map<String, Object> times = new LinkedHashMap<String, Object>();
-                times.put(key, isInclude);
-                this.timeRestrictions.add(times);
+                Boolean isInclude = include != null && include.equalsIgnoreCase("true");
+                map.put(key, isInclude);
             }
+//            if (!this.addTimeRestrictions) {
+//                map.put("timerestrictions", null);
+//                this.addTimeRestrictions = true;
+//            }
+//
+//            if (!this.include.containsKey(key)) {
+//                String include = xmlr.getAttributeValue("", "Include");
+//                Boolean isInclude = include.equalsIgnoreCase("true");
+//                this.include.put(key, isInclude);
+//
+//                Map<String, Object> times = new LinkedHashMap<String, Object>();
+//                times.put(key, isInclude);
+//                this.timeRestrictions.add(times);
+//            }
         }
     }
 
