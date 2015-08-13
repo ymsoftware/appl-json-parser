@@ -132,9 +132,8 @@ public class NewsLinesParser extends ApplParser {
 
         if (this.addPersons) {
             if (map.containsKey("persons")) {
-                ((Collection<Map<String, Object>>)map.get("person")).addAll(this.persons);
-            }
-            else{
+                ((Collection<Map<String, Object>>) map.get("person")).addAll(this.persons);
+            } else {
                 map.put("persons", this.persons);
             }
             this.addPersons = false;

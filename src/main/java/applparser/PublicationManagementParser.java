@@ -267,7 +267,7 @@ public class PublicationManagementParser extends ApplParser {
 
         String key = String.format("%s%s", system, zone).toLowerCase();
         if (key.length() > 0) {
-            if (!map.containsKey(key)){
+            if (!map.containsKey(key)) {
                 String include = xmlr.getAttributeValue("", "Include");
                 Boolean isInclude = include != null && include.equalsIgnoreCase("true");
                 map.put(key, isInclude);

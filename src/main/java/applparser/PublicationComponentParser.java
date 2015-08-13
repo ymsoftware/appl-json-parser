@@ -348,7 +348,7 @@ public class PublicationComponentParser extends ApplParser {
         } else if (this.role.equals("physicalmain")) {
             Map<String, Object> video = getContent(content, "PhysicalMain", xmlr);
             if (video.containsKey("physicaltype")) {
-                String physicaltype = (String)video.get("physicaltype");
+                String physicaltype = (String) video.get("physicaltype");
                 String name = physicaltype.replaceAll("-", "").replaceAll(" ", "").toLowerCase();
                 video.replace("title", physicaltype);
                 setRendition(name, video, true);

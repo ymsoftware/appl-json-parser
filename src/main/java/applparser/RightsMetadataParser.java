@@ -21,7 +21,7 @@ public class RightsMetadataParser extends ApplParser {
             case "UsageRights":
                 ObjectParser parser = new UsageRightsParser();
                 Map<String, Object> right = parser.parse(name, xmlr);
-                if (right.size()>0){
+                if (right.size() > 0) {
                     if (!this.addUsageRights) {
                         map.put("usagerights", null);
                         this.addUsageRights = true;

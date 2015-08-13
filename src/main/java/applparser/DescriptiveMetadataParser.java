@@ -203,9 +203,8 @@ public class DescriptiveMetadataParser extends ApplParser {
         }
         if (this.addPersons) {
             if (map.containsKey("persons")) {
-                ((Collection<Map<String, Object>>)map.get("persons")).addAll(this.persons.values());
-            }
-            else{
+                ((Collection<Map<String, Object>>) map.get("persons")).addAll(this.persons.values());
+            } else {
                 map.put("persons", this.persons.values());
             }
             this.addPersons = false;
@@ -239,7 +238,7 @@ public class DescriptiveMetadataParser extends ApplParser {
             map.remove("addConsumerReady");
         }
 
-        if (!this.geo){
+        if (!this.geo) {
             map.put("addStateAudienece", true);
         }
     }
