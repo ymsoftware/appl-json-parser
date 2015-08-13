@@ -18,14 +18,20 @@ public class Helpers {
         }
     }
 
+    public static void safeAddString(String field, String value, Map<String, Object> map) {
+        if (!isNullOrEmpty(value)) {
+            map.put(field, value.trim());
+        }
+    }
+
     public static void safeAddStringId(String field, String value, Map<String, Object> map) {
-        if (value != null && value.length() > 0) {
+        if (!isNullOrEmpty(value)) {
             map.put(field, value.trim().toLowerCase());
         }
     }
 
     public static void safeAddInteger(String field, String value, Map<String, Object> map) {
-        if (value != null && value.length() > 0) {
+        if (!isNullOrEmpty(value)) {
             try {
                 map.put(field, Integer.parseUnsignedInt(value));
             } catch (Exception e) {
@@ -95,8 +101,8 @@ public class Helpers {
     }
 
     public static Map<String, Object> getCodeNameObject(String code, String name) {
-        boolean hasCode = code != null;
-        boolean hasName = name != null;
+        boolean hasCode = !isNullOrEmpty(code);
+        boolean hasName = !isNullOrEmpty(name);
         if (hasCode || hasName) {
             Map<String, Object> map = new LinkedHashMap<String, Object>();
             if (hasCode) map.put("code", code);
@@ -115,7 +121,7 @@ public class Helpers {
 
             List<String> list = (List<String>) map.get(key);
             if (!list.contains(value)) {
-                list.add(value);
+                list.add(value.trim());
             }
         }
     }
@@ -130,7 +136,7 @@ public class Helpers {
 
             for (String value : values) {
                 if (!list.contains(value)) {
-                    list.add(value);
+                    list.add(value.trim());
                 }
             }
         }
@@ -197,5 +203,12 @@ public class Helpers {
         }
 
         return foreignkeys;
+    }
+
+    public static boolean isNullOrEmpty(String test) {
+        if (test == null) return true;
+        if (test.length() == 0) return true;
+        if (test.trim().length() == 0) return true;
+        return false;
     }
 }

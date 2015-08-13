@@ -34,7 +34,7 @@ public class PublicationManagementParser extends ApplParser {
             case "SpecialInstructions":
             case "EditorialId":
             case "Function":
-                Helpers.safeAdd(name.toLowerCase(), xmlr.getElementText(), map);
+                Helpers.safeAddString(name.toLowerCase(), xmlr.getElementText(), map);
                 break;
             case "ArrivalDateTime":
             case "LastModifiedDateTime":
@@ -194,7 +194,7 @@ public class PublicationManagementParser extends ApplParser {
             }
 
             ass.put("itemid", id.toLowerCase());
-            ass.put("represantationtype", "partial");
+            ass.put("representationtype", "partial");
 
             this.rank += 1;
             ass.put("associationrank", this.rank);
@@ -248,7 +248,7 @@ public class PublicationManagementParser extends ApplParser {
                     map.put("outinginstructions", null);
                     this.addInstructions = true;
                 }
-                this.instructions.add(text);
+                this.instructions.add(text.trim());
             }
         }
     }
@@ -272,20 +272,6 @@ public class PublicationManagementParser extends ApplParser {
                 Boolean isInclude = include != null && include.equalsIgnoreCase("true");
                 map.put(key, isInclude);
             }
-//            if (!this.addTimeRestrictions) {
-//                map.put("timerestrictions", null);
-//                this.addTimeRestrictions = true;
-//            }
-//
-//            if (!this.include.containsKey(key)) {
-//                String include = xmlr.getAttributeValue("", "Include");
-//                Boolean isInclude = include.equalsIgnoreCase("true");
-//                this.include.put(key, isInclude);
-//
-//                Map<String, Object> times = new LinkedHashMap<String, Object>();
-//                times.put(key, isInclude);
-//                this.timeRestrictions.add(times);
-//            }
         }
     }
 

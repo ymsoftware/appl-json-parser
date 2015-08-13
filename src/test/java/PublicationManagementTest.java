@@ -36,7 +36,6 @@ public class PublicationManagementTest {
                 + "<AssociatedWith CompositionType=\"video\">cbS</AssociatedWith>"
                 + "<AssociatedWith CompositionType=\"StandardText\">nBc</AssociatedWith>"
                 + "<Editorial><Type>Advance</Type><Type>HoldForRelease</Type></Editorial>"
-                + "<TimeRestrictions System=\"a\" Zone=\"b\" Include=\"true\"></TimeRestrictions>"
                 + "<ExplicitWarning>1</ExplicitWarning>"
                 + "<IsDigitized>false</IsDigitized>"
                 + "<Instruction Type=\"Outing\">Include this</Instruction>"
@@ -97,11 +96,6 @@ public class PublicationManagementTest {
         assertEquals(true, testNode.isArray());
         assertEquals(1, testNode.size());
         assertEquals("Include this", testNode.elements().next().asText());
-
-        testNode = rootNode.path("timerestrictions");
-        assertEquals(true, testNode.isArray());
-        assertEquals(1, testNode.size());
-        assertEquals(true, testNode.elements().next().get("ab").asBoolean());
 
         testNode = rootNode.path("signals");
         assertEquals(true, testNode.isArray());
@@ -285,11 +279,13 @@ public class PublicationManagementTest {
         String appl = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
                 + "<Publication Version=\"4.4.0\" xmlns=\"http://ap.org/schemas/03/2005/appl\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                 + "<PublicationManagement>"
-                + "<TimeRestrictions System=\"a\" Zone=\"b\" Include=\"true\"></TimeRestrictions>"
-                + "<TimeRestrictions System=\"a\" Include=\"true\"></TimeRestrictions>"
-                + "<TimeRestrictions Zone=\"b\" Include=\"true\"></TimeRestrictions>"
-                + "<TimeRestrictions System=\"a\" Zone=\"b\" Include=\"false\"></TimeRestrictions>"
-                + "<TimeRestrictions System=\"b\" Zone=\"a\" Include=\"false\"></TimeRestrictions>"
+                + "<TimeRestrictions>"
+                + "<TimeRestriction System=\"a\" Zone=\"b\" Include=\"true\" />"
+                + "<TimeRestriction System=\"a\" Include=\"true\" />"
+                + "<TimeRestriction Zone=\"b\" Include=\"true\" />"
+                + "<TimeRestriction System=\"a\" Zone=\"b\" Include=\"false\" />"
+                + "<TimeRestriction System=\"b\" Zone=\"a\" Include=\"false\" />"
+                + "</TimeRestrictions>"
                 + "</PublicationManagement>"
                 + "</Publication>";
 
@@ -298,22 +294,16 @@ public class PublicationManagementTest {
 
         ObjectMapper m = new ObjectMapper();
         JsonNode rootNode = m.readTree(json);
-        JsonNode testNode = rootNode.path("timerestrictions");
-        assertEquals(true, testNode.isArray());
-        assertEquals(4, testNode.size());
+        JsonNode testNode = rootNode.path("ab");
+        assertEquals(true, testNode.asBoolean());
 
-        Iterator<JsonNode> elements = testNode.elements();
+        testNode = rootNode.path("a");
+        assertEquals(true, testNode.asBoolean());
 
-        JsonNode time = elements.next().get("ab");
-        assertEquals(true, time.asBoolean());
+        testNode = rootNode.path("b");
+        assertEquals(true, testNode.asBoolean());
 
-        time = elements.next().get("a");
-        assertEquals(true, time.asBoolean());
-
-        time = elements.next().get("b");
-        assertEquals(true, time.asBoolean());
-
-        time = elements.next().get("ba");
-        assertEquals(false, time.asBoolean());
+        testNode = rootNode.path("ba");
+        assertEquals(false, testNode.asBoolean());
     }
 }

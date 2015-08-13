@@ -82,7 +82,7 @@ public class DocumentParser {
                         if (role != null) {
                             String type = xmlr.getAttributeValue("", "MediaType");
                             if (type != null) {
-                                parser = new PublicationComponentParser(role.toLowerCase(), type.toLowerCase(), map);
+                                parser = new PublicationComponentParser(role, type.toLowerCase(), map);
                             }
                         }
                         break;
@@ -117,8 +117,10 @@ public class DocumentParser {
                             map.remove("addConsumerReady");
                         }
 
-                        if (map.containsKey("addStateAudienece")) {
-                            map.remove("addStateAudienece");
+                        for (String key : new String[]{"addStateAudienece", "totalduration"}) {
+                            if (map.containsKey(key)) {
+                                map.remove(key);
+                            }
                         }
 
                         for (String key : new String[]{"copyrightholder", "copyrightdate"}) {

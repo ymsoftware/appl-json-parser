@@ -101,7 +101,7 @@ public class DescriptiveMetadataParser extends ApplParser {
                 break;
             case "Comment":
                 String text = xmlr.getElementText();
-                if (text != null && text.length() > 0) {
+                if (!Helpers.isNullOrEmpty(text)) {
                     ensureServices(map);
                     Map<String, Object> comment = new HashMap<String, Object>();
                     comment.put("apservice", text);
@@ -251,6 +251,7 @@ public class DescriptiveMetadataParser extends ApplParser {
 
         String text = xmlr.getElementText();
         if (text != null) {
+            text = text.trim();
             if (!this.addDescriptions) {
                 map.put("descriptions", null);
                 this.addDescriptions = true;
@@ -931,13 +932,13 @@ public class DescriptiveMetadataParser extends ApplParser {
                 case "City":
                 case "CountryAreaName":
                 case "CountryName":
-                    Helpers.safeAdd(name.toLowerCase(), xmlr.getElementText(), map);
+                    Helpers.safeAddString(name.toLowerCase(), xmlr.getElementText(), map);
                     break;
                 case "CountryArea":
-                    Helpers.safeAdd("countryareacode", xmlr.getElementText(), map);
+                    Helpers.safeAddString("countryareacode", xmlr.getElementText(), map);
                     break;
                 case "Country":
-                    Helpers.safeAdd("countrycode", xmlr.getElementText(), map);
+                    Helpers.safeAddString("countrycode", xmlr.getElementText(), map);
                     break;
                 case "LongitudeDD":
                     this.lon = Helpers.parseNumber(xmlr.getElementText());

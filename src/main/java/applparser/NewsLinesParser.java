@@ -50,17 +50,19 @@ public class NewsLinesParser extends ApplParser {
                 this.originalHeadline = xmlr.getElementText();
                 break;
             case "HeadLine":
-                this.headline = xmlr.getElementText();
+                String text = xmlr.getElementText();
+                this.headline = Helpers.isNullOrEmpty(text) ? null : text.trim();
                 break;
             case "Title":
-                this.title = xmlr.getElementText();
+                text = xmlr.getElementText();
+                this.title = Helpers.isNullOrEmpty(text) ? null : text.trim();
                 break;
             case "DateLine":
             case "RightsLine":
             case "SeriesLine":
             case "OutCue":
             case "LocationLine":
-                Helpers.safeAdd(name.toLowerCase(), xmlr.getElementText(), map);
+                Helpers.safeAddString(name.toLowerCase(), xmlr.getElementText(), map);
                 break;
             case "ByLine":
                 setBylines(name, xmlr, map);
@@ -76,8 +78,8 @@ public class NewsLinesParser extends ApplParser {
                 if (id != null) {
                     map.put("creditlineid", id);
                 }
-                String text = xmlr.getElementText();
-                if (text != null && text.length() > 0) {
+                text = xmlr.getElementText();
+                if (!Helpers.isNullOrEmpty(text)) {
                     map.put("creditline", text);
                 }
                 break;
@@ -204,7 +206,7 @@ public class NewsLinesParser extends ApplParser {
 
         String title = xmlr.getAttributeValue("", "Title");
         String by = xmlr.getElementText();
-        if (by != null) {
+        if (!Helpers.isNullOrEmpty(by)) {
             if (!this.addBylines) {
                 map.put("bylines", null);
                 this.addBylines = true;
@@ -213,7 +215,7 @@ public class NewsLinesParser extends ApplParser {
             Map<String, String> byline = new LinkedHashMap<String, String>();
             byline.put("by", by);
 
-            if (title == null) {
+            if (Helpers.isNullOrEmpty(title)) {
                 this.missingOriginalBylineTitles = true;
             } else {
                 byline.put("title", title);
@@ -231,10 +233,20 @@ public class NewsLinesParser extends ApplParser {
         String title = xmlr.getAttributeValue("", "Title");
         boolean producer = title != null && title.equalsIgnoreCase("EditedBy");
 
+        boolean photographer = false;
+        boolean captionwriter = false;
+        boolean editor = false;
+
         String parametric = xmlr.getAttributeValue("", "Parametric");
-        boolean photographer = parametric != null && parametric.equalsIgnoreCase("photographer");
-        boolean captionwriter = !photographer && parametric != null && parametric.equalsIgnoreCase("captionwriter");
-        boolean editor = !photographer && !captionwriter && parametric != null && parametric.equalsIgnoreCase("editedby");
+        if (parametric != null) {
+            if (parametric.equalsIgnoreCase("photographer")) {
+                photographer = !this.isPhotographer;
+            } else if (parametric.equalsIgnoreCase("captionwriter")) {
+                captionwriter = !this.isCaptionwriter;
+            } else if (parametric.equalsIgnoreCase("editedby")) {
+                editor = !this.isEditor;
+            }
+        }
 
         String id = xmlr.getAttributeValue("", "Id");
         String by = xmlr.getElementText();
@@ -243,7 +255,7 @@ public class NewsLinesParser extends ApplParser {
             Map<String, String> add = new LinkedHashMap<String, String>();
             add.put("name", by);
 
-            if (id != null) {
+            if (!Helpers.isNullOrEmpty(id)) {
                 add.put("code", id);
             }
 
@@ -252,61 +264,52 @@ public class NewsLinesParser extends ApplParser {
                 return;
             }
 
-            if (title != null) {
+            if (!Helpers.isNullOrEmpty(title)) {
                 add.put("title", title);
             }
 
             if (photographer) {
-                if (!this.isPhotographer) {
-                    this.isPhotographer = true;
-                    map.put("photographer", add);
-                }
-                return;
+                this.isPhotographer = true;
+                map.put("photographer", add);
             } else if (captionwriter) {
-                if (!this.isCaptionwriter) {
-                    this.isCaptionwriter = true;
-                    map.put("captionwriter", add);
-                }
-                return;
+                this.isCaptionwriter = true;
+                map.put("captionwriter", add);
             } else if (editor) {
-                if (!this.isEditor) {
-                    this.isEditor = true;
-                    map.put("editor", add);
-                }
-                return;
+                this.isEditor = true;
+                map.put("editor", add);
             }
-        } else {
-            if (title != null && this.defaultBylineTitle == null) {
-                this.defaultBylineTitle = title;
+        }
+
+        if (title != null && this.defaultBylineTitle == null) {
+            this.defaultBylineTitle = title;
+        }
+
+        if (this.originalBylines == null) {
+            Map<String, String> add = new LinkedHashMap<String, String>();
+            add.put("by", by);
+
+            if (!Helpers.isNullOrEmpty(id)) {
+                add.put("code", id);
             }
 
-            if (this.originalBylines == null) {
-                Map<String, String> add = new LinkedHashMap<String, String>();
-                add.put("by", by);
-
-                if (id != null) {
-                    add.put("code", id);
-                }
-
-                if (title != null) {
-                    add.put("title", title);
-                }
-
-                if (parametric != null) {
-                    add.put("parametric", parametric);
-                }
-
-                if (!this.addBylines) {
-                    map.put("bylines", null);
-                    this.addBylines = true;
-                }
-
-                if (this.bylines == null) {
-                    this.bylines = new ArrayList<Map<String, String>>();
-                }
-
-                this.bylines.add(add);
+            if (!Helpers.isNullOrEmpty(title)) {
+                add.put("title", title);
             }
+
+            if (!Helpers.isNullOrEmpty(parametric)) {
+                add.put("parametric", parametric);
+            }
+
+            if (!this.addBylines) {
+                map.put("bylines", null);
+                this.addBylines = true;
+            }
+
+            if (this.bylines == null) {
+                this.bylines = new ArrayList<Map<String, String>>();
+            }
+
+            this.bylines.add(add);
         }
     }
 
@@ -321,7 +324,7 @@ public class NewsLinesParser extends ApplParser {
                 map.put("overlines", null);
                 this.addOverlines = true;
             }
-            this.overlines.add(text);
+            this.overlines.add(text.trim());
         }
     }
 
@@ -336,7 +339,7 @@ public class NewsLinesParser extends ApplParser {
                 map.put("keywordlines", null);
                 this.addKeywordlines = true;
             }
-            this.keywordlines.add(text);
+            this.keywordlines.add(text.trim());
         }
     }
 
@@ -354,8 +357,8 @@ public class NewsLinesParser extends ApplParser {
                 }
 
                 Map<String, Object> person = new LinkedHashMap<String, Object>();
-                person.put("name", text);
-                person.put("rel", new String[]{"personfeatured"});
+                person.put("name", text.trim());
+                person.put("rels", new String[]{"personfeatured"});
                 person.put("creator", "Editorial");
 
                 this.persons.add(person);

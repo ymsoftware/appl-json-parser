@@ -61,36 +61,42 @@ public class FilingMetadataParser extends ApplParser {
             case "BreakingNews":
             case "FilingStyle":
             case "JunkLine":
-                Helpers.safeAdd(name.toLowerCase(), xmlr.getElementText(), this.filing);
+                Helpers.safeAddString(name.toLowerCase(), xmlr.getElementText(), this.filing);
                 break;
             case "SlugLine":
                 String text = xmlr.getElementText();
-                if (text != null && text.length() > 0) {
+                if (!Helpers.isNullOrEmpty(text)) {
+                    text = text.trim();
                     Helpers.safeAdd(name.toLowerCase(), text, this.filing);
                     this.slugline = text;
                 }
                 break;
             case "Selector":
                 text = xmlr.getElementText();
-                if (text != null && text.length() > 0) {
+                if (!Helpers.isNullOrEmpty(text)) {
+                    text = text.trim();
                     Helpers.safeAdd(name.toLowerCase(), text, this.filing);
                     this.selector = text;
                 }
                 break;
             case "Id":
+                Helpers.safeAddStringId("filingid", xmlr.getElementText(), this.filing);
+                break;
             case "ArrivalDateTime":
-                Helpers.safeAdd("filing" + name.toLowerCase(), xmlr.getElementText(), this.filing);
+                Helpers.safeAdd("filingarrivaldatetime", Helpers.parseDate(xmlr.getElementText()), this.filing);
                 break;
             case "Source":
                 text = xmlr.getElementText();
-                if (text != null && text.length() > 0) {
+                if (!Helpers.isNullOrEmpty(text)) {
+                    text = text.trim();
                     Helpers.safeAdd("filingsource", text, this.filing);
                     this.source = text;
                 }
                 break;
             case "Category":
                 text = xmlr.getElementText();
-                if (text != null && text.length() > 0) {
+                if (!Helpers.isNullOrEmpty(text)) {
+                    text = text.trim();
                     Helpers.safeAdd("filingcategory", text, this.filing);
                     this.category = text;
                 }
@@ -429,7 +435,7 @@ public class FilingMetadataParser extends ApplParser {
     }
 
     private void addCountry(String text) {
-        if (text != null && text.length() > 0) {
+        if (!Helpers.isNullOrEmpty(text)) {
             if (!this.addFilingCountries) {
                 this.addFilingCountries = true;
                 this.filingcountries = new ArrayList<String>();
@@ -443,7 +449,7 @@ public class FilingMetadataParser extends ApplParser {
     }
 
     private void addRegion(String text) {
-        if (text != null && text.length() > 0) {
+        if (!Helpers.isNullOrEmpty(text)) {
             if (!this.addFilingRegions) {
                 this.addFilingRegions = true;
                 this.filingregions = new ArrayList<String>();
@@ -457,7 +463,7 @@ public class FilingMetadataParser extends ApplParser {
     }
 
     private void addTopic(String text) {
-        if (text != null && text.length() > 0) {
+        if (!Helpers.isNullOrEmpty(text)) {
             if (!this.addFilingTopics) {
                 this.addFilingTopics = true;
                 this.filingtopics = new ArrayList<String>();
@@ -503,7 +509,7 @@ public class FilingMetadataParser extends ApplParser {
     }
 
     private void addSubject(String text) {
-        if (text != null && text.length() > 0) {
+        if (!Helpers.isNullOrEmpty(text)) {
             if (!this.addFilingSubjects) {
                 this.addFilingSubjects = true;
                 this.filingsubjects = new ArrayList<String>();
@@ -536,7 +542,7 @@ public class FilingMetadataParser extends ApplParser {
             String outed = xmlr.getAttributeValue("", "Outed");
 
             String text = xmlr.getElementText();
-            if (text != null && text.length() > 0) {
+            if (!Helpers.isNullOrEmpty(text)) {
                 if (!this.addRoutings) {
                     this.addRoutings = true;
                     this.routings = new LinkedHashMap<String, Object>();

@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
  */
 public class PublicationComponentParser extends ApplParser {
     private String role;
+    private String roleRaw;
     private String type;
     private String mediaType;
     private StringBuilder text;
@@ -18,24 +19,25 @@ public class PublicationComponentParser extends ApplParser {
     private boolean readText;
     private boolean readWords;
     private int blocks;
+    private boolean hasText;
     private StringBuilder title;
     private boolean needsTitle;
     private boolean needsHeadline;
-    private Map<String, Integer> counts;
-    private Map<String, Map<String, Object>> renditions;
     private Map<String, Object> matte;
     private List<Map<String, Object>> parts;
-    private String physicaltype;
     private List<Long> offsets;
     private List<Map<String, Object>> shots;
+    private Map<String, Object> parent;
 
     public PublicationComponentParser(String role, String type, Map<String, Object> map) {
-        this.role = role;
+        this.roleRaw = role;
+        this.role = role.toLowerCase();
         this.type = type;
+        this.parent = map;
         this.mediaType = map.containsKey("type") ? (String) map.get("type") : "text";
 
-        boolean isMain = role.equals("main");
-        boolean isCaption = role.equals("caption");
+        boolean isMain = this.role.equals("main");
+        boolean isCaption = this.role.equals("caption");
 
         if (isMain || isCaption) {
             if ((isMain && this.mediaType.equals("text")) || (isCaption && (this.mediaType.equals("photo") || this.mediaType.equals("video")))) {
@@ -87,9 +89,9 @@ public class PublicationComponentParser extends ApplParser {
 
     @Override
     public void cleanup(Map<String, Object> map) {
-        if (this.text != null) {
+        if (this.hasText) {
             Map<String, Object> text = new LinkedHashMap<String, Object>();
-            text.put("nitf", this.text.toString());
+            text.put("nitf", this.text.toString().trim());
             if (this.words != null) text.put("words", this.words);
             map.put(this.role, text);
         }
@@ -103,14 +105,6 @@ public class PublicationComponentParser extends ApplParser {
 
             if (this.needsTitle) map.replace("title", title);
             if (this.needsHeadline) map.replace("headline", title);
-        }
-
-        if (this.renditions != null) {
-            if (map.containsKey("renditions")) {
-                ((Map<String, Map<String, Object>>) map.get("renditions")).putAll(this.renditions);
-            } else {
-                map.put("renditions", this.renditions);
-            }
         }
 
         if (this.parts != null) {
@@ -140,7 +134,7 @@ public class PublicationComponentParser extends ApplParser {
                 String name = xmlr.getLocalName();
 
                 if (this.readText) {
-                    if (xmlr.isStandalone()){
+                    if (xmlr.isStandalone()) {
                         String debug = "";
                     }
                     this.text.append("<").append(name);
@@ -198,6 +192,7 @@ public class PublicationComponentParser extends ApplParser {
             } else if (eventType == XMLStreamReader.CHARACTERS && this.readText) {
                 String text = xmlr.getText();
                 this.text.append(text);
+                this.hasText = true;
                 if (this.title != null) this.title.append(text);
             }
         }
@@ -222,7 +217,7 @@ public class PublicationComponentParser extends ApplParser {
             Map<String, Object> photo = getContent(content, title, xmlr);
             String meta = getBinaryName(photo, null, true, true);
             String name = this.role + meta.replaceAll("-", "").replaceAll(" ", "").toLowerCase();
-            title = String.format("%s (%s)", name, meta);
+            title = String.format("%s (%s)", this.roleRaw, meta);
             photo.replace("title", title);
             setRendition(name, photo, true);
         } else {
@@ -257,7 +252,7 @@ public class PublicationComponentParser extends ApplParser {
                     }
                 }
 
-                isHref = ext != null && ext.length() > 0;
+                isHref = !Helpers.isNullOrEmpty(ext);
                 if (isHref) {
                     chars = url.toCharArray();
                     for (int i = chars.length - 1; i > 0; i--) {
@@ -272,8 +267,7 @@ public class PublicationComponentParser extends ApplParser {
                 }
             }
 
-            Long duration = photo.containsKey("totalduration") ? (Long) photo.get("totalduration") : null;
-            if (duration == null) duration = 0l;
+            Long duration = this.parent.containsKey("totalduration") ? (Long) this.parent.get("totalduration") : 0l;
 
             String start = null, end = null;
 
@@ -327,7 +321,7 @@ public class PublicationComponentParser extends ApplParser {
                         if (video.containsKey("originalfilename")) {
                             String url = (String) video.get("originalfilename");
                             String[] tokens = url.split("_");
-                            file = tokens[tokens.length - 1].split(".")[0];
+                            file = tokens[tokens.length - 1].split("\\.")[0];
                         }
 
                         String meta = getBinaryName(video, null, true, true);
@@ -337,15 +331,31 @@ public class PublicationComponentParser extends ApplParser {
                         setRendition(name, video, true);
                     }
                 }
+
+                if (video.containsKey("totalduration") && !this.parent.containsKey("totalduration")) {
+                    Long totalduration = (Long) video.get("totalduration");
+                    this.parent.put("totalduration", totalduration);
+
+                    if (this.parent.containsKey("shots")) {
+                        List<Map<String, Object>> shots = (List<Map<String, Object>>) this.parent.get("shots");
+                        Map<String, Object> shot = shots.get(shots.size() - 1);
+                        shot.replace("end", formatTime(totalduration));
+                    }
+                }
             } else if (content.equals("WebPartContentItem")) {
                 setRendition("mainweb", getContent(content, "Web", xmlr), true);
             }
-        } else if (this.role.equals("physicalmain") && this.physicaltype != null) {
-            String name = this.physicaltype.replaceAll("-", "").replaceAll(" ", "").toLowerCase();
-            setRendition(name, getContent(content, this.physicaltype, xmlr), true);
+        } else if (this.role.equals("physicalmain")) {
+            Map<String, Object> video = getContent(content, "PhysicalMain", xmlr);
+            if (video.containsKey("physicaltype")) {
+                String physicaltype = (String)video.get("physicaltype");
+                String name = physicaltype.replaceAll("-", "").replaceAll(" ", "").toLowerCase();
+                video.replace("title", physicaltype);
+                setRendition(name, video, true);
+            }
         } else if (this.role.equals("preview")) {
             Map<String, Object> video = getContent(content, "Preview", xmlr);
-            String meta = getBinaryName(video, null, true, true);
+            String meta = getBinaryName(video, null, false, false);
             String name = "preview" + meta.replaceAll("-", "").replaceAll(" ", "").toLowerCase();
             String title = String.format("Preview (%s)", meta);
             video.replace("title", title);
@@ -423,27 +433,18 @@ public class PublicationComponentParser extends ApplParser {
     }
 
     private void setRendition(String name, Map<String, Object> rendition, boolean multiple) {
-        if (this.renditions == null) {
-            this.renditions = new LinkedHashMap<String, Map<String, Object>>();
-        }
-        if (multiple) {
-            if (this.counts == null) {
-                this.counts = new HashMap<String, Integer>();
-            }
+        if (this.parent.containsKey("renditions")) {
+            Map<String, Map<String, Object>> renditions = (Map<String, Map<String, Object>>) this.parent.get("renditions");
 
-            Integer count = 1;
-            if (this.counts.containsKey(name)) {
-                count = (Integer) this.counts.get(name) + 1;
-                this.counts.replace(name, count);
-            } else {
-                this.counts.put(name, 1);
+            if (!renditions.containsKey(name)) {
+                renditions.put(name, rendition);
+            } else if (multiple) {
+                renditions.put(String.format("%s%d", name, renditions.size() + 1), rendition);
             }
-
-            this.renditions.put(String.format("%s%d", name, count), rendition);
         } else {
-            if (!this.renditions.containsKey(name)) {
-                this.renditions.put(name, rendition);
-            }
+            Map<String, Map<String, Object>> renditions = new LinkedHashMap<String, Map<String, Object>>();
+            renditions.put(name, rendition);
+            this.parent.put("renditions", renditions);
         }
     }
 
@@ -451,7 +452,7 @@ public class PublicationComponentParser extends ApplParser {
         Map<String, Object> map = new LinkedHashMap<String, Object>();
 
         map.put("title", title);
-        map.put("rel", this.role);
+        map.put("rel", this.roleRaw);
         map.put("type", this.type);
 
         setAttributes(xmlr, map);
@@ -531,10 +532,8 @@ public class PublicationComponentParser extends ApplParser {
                         setAttributes(xmlr, matte);
                         this.matte = matte;
                     }
-                } else if (name.equals("PhysicalType") && this.type.equals("video") && this.role.equals("physicalmain") && content.equals("VideoContentItem")) {
-                    this.physicaltype = xmlr.getElementText();
                 } else if (name.equals("File") && content.equals("PhotoCollectionContentItem") && this.type.equals("photo")) {
-                    String attr = xmlr.getAttributeValue("", "TimeOffsetMilliseconds");
+                    String attr = xmlr.getAttributeValue("", "TimeOffSetMilliseconds");
                     Long offset = attr == null ? 0 : Helpers.parseLong(attr);
                     if (this.offsets == null) {
                         this.offsets = new ArrayList<Long>();
@@ -572,10 +571,10 @@ public class PublicationComponentParser extends ApplParser {
                     String id = xmlr.getAttributeValue("", "Id");
                     if (id != null) map.put("sceneid", id);
                     String value = xmlr.getElementText();
-                    if (value != null && value.length() > 0) map.put("scene", value);
-                } else {
+                    if (!Helpers.isNullOrEmpty(value)) map.put("scene", value);
+                } else if (!name.equals("scenes")) {
                     String value = xmlr.getElementText();
-                    if (value != null && value.length() > 0) {
+                    if (!Helpers.isNullOrEmpty(value)) {
                         switch (name) {
                             case "totalduration":
                             case "resolution":
@@ -586,8 +585,6 @@ public class PublicationComponentParser extends ApplParser {
                                 if (number != null) {
                                     map.put(name, number);
                                 }
-                                break;
-                            case "scenes":
                                 break;
                             default:
                                 map.put(name, value);
@@ -652,27 +649,19 @@ public class PublicationComponentParser extends ApplParser {
     }
 
     private String formatTime(Long ms) {
-        long second = 0;
-        long minute = 0;
-        long hour = 0;
+        long millis = ms;
 
-        second = (ms / 1000) % 60;
+        long second = (ms / 1000) % 60;
+        if (second > 0) millis -= second * 1000;
 
-        if (second > 0) {
-            ms -= second * 1000;
+        long minute = (ms / (1000 * 60)) % 60;
+        if (minute > 0) millis -= minute * 60 * 1000;
 
-            minute = (ms / (1000 * 60)) % 60;
-            if (minute > 0) {
-                ms -= minute * 60 * 1000;
+        long hour = (ms / (1000 * 60 * 60)) % 24;
+        if (hour > 0) millis -= hour * 24 * 60 * 1000;
 
-                hour = (ms / (1000 * 60 * 60)) % 24;
-                if (hour > 0) {
-                    ms -= hour * 24 * 60 * 1000;
-                }
-            }
-        }
 
-        String time = String.format("%02d:%02d:%02d:%03d", hour, minute, second, ms);
+        String time = String.format("%02d:%02d:%02d.%03d", hour, minute, second, millis);
         return time;
     }
 }

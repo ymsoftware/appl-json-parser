@@ -111,7 +111,7 @@ public class RightsMetadataParser extends ApplParser {
             switch (name) {
                 case "UsageType":
                 case "RightsHolder":
-                    Helpers.safeAdd(name.toLowerCase(), xmlr.getElementText(), map);
+                    Helpers.safeAddString(name.toLowerCase(), xmlr.getElementText(), map);
                     break;
                 case "StartDate":
                 case "EndDate":
@@ -120,7 +120,7 @@ public class RightsMetadataParser extends ApplParser {
                     break;
                 case "Geography":
                     String geo = xmlr.getElementText();
-                    if (geo != null && geo.length() > 0) {
+                    if (!Helpers.isNullOrEmpty(geo)) {
                         if (!this.addGeography) {
                             map.put("geography", null);
                             this.addGeography = true;
@@ -132,7 +132,7 @@ public class RightsMetadataParser extends ApplParser {
                     break;
                 case "Limitations":
                     String limit = xmlr.getElementText();
-                    if (limit != null && limit.length() > 0) {
+                    if (!Helpers.isNullOrEmpty(limit)) {
                         if (!this.addLimitations) {
                             map.put("limitations", null);
                             this.addLimitations = true;
@@ -152,7 +152,7 @@ public class RightsMetadataParser extends ApplParser {
                     if (code != null) group.put("code", code);
 
                     String text = xmlr.getElementText();
-                    if (text != null && text.length() > 0) group.put("name", text);
+                    if (!Helpers.isNullOrEmpty(text)) group.put("name", text);
 
                     if (group.size() > 0) {
                         if (!this.addGroups) {

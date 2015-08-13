@@ -37,10 +37,10 @@ public class AdministrativeMetadataParser extends ApplParser {
             case "Contributor":
             case "WorkflowStatus":
             case "Workgroup":
-                Helpers.safeAdd(name.toLowerCase(), xmlr.getElementText(), map);
+                Helpers.safeAddString(name.toLowerCase(), xmlr.getElementText(), map);
                 break;
             case "ContentElement":
-                Helpers.safeAdd("editorialrole", xmlr.getElementText(), map);
+                Helpers.safeAddString("editorialrole", xmlr.getElementText(), map);
                 break;
             case "Provider":
                 setProvider(name.toLowerCase(), xmlr, map);
@@ -160,7 +160,7 @@ public class AdministrativeMetadataParser extends ApplParser {
         if (type != null) provider.put("subtype", type);
 
         String text = xmlr.getElementText();
-        if (text != null && text.length() > 0) provider.put("name", text);
+        if (!Helpers.isNullOrEmpty(text)) provider.put("name", text);
 
         if (provider.size() > 0) {
             Helpers.safeAdd(name, provider, map);
@@ -195,7 +195,7 @@ public class AdministrativeMetadataParser extends ApplParser {
         if (type != null) source.put("subtype", type);
 
         String text = xmlr.getElementText();
-        if (text != null && text.length() > 0) source.put("name", text);
+        if (!Helpers.isNullOrEmpty(text)) source.put("name", text);
 
         if (source.size() > 0) {
             if (!this.addSources) {
@@ -223,7 +223,7 @@ public class AdministrativeMetadataParser extends ApplParser {
         } else {
             Map<String, Object> source = new LinkedHashMap<String, Object>();
 
-            if (name != null && name.length() > 0) source.put("name", name);
+            if (!Helpers.isNullOrEmpty(name)) source.put("name", name);
 
             String code = xmlr.getAttributeValue("", "Id");
             if (code != null) source.put("code", code);
@@ -251,6 +251,7 @@ public class AdministrativeMetadataParser extends ApplParser {
 
         String text = xmlr.getElementText();
         if (text != null) {
+            text = text.trim();
             if (!this.addTransmissionSources) {
                 map.put("transmissionsources", null);
                 this.addTransmissionSources = true;
@@ -266,6 +267,7 @@ public class AdministrativeMetadataParser extends ApplParser {
 
         String text = xmlr.getElementText();
         if (text != null) {
+            text = text.trim();
             if (!this.addProductSources) {
                 map.put("productsources", null);
                 this.addProductSources = true;
@@ -281,6 +283,7 @@ public class AdministrativeMetadataParser extends ApplParser {
 
         String text = xmlr.getElementText();
         if (text != null) {
+            text = text.trim();
             if (!this.addDistributionChannels) {
                 map.put("distributionchannels", null);
                 this.addDistributionChannels = true;
@@ -299,7 +302,7 @@ public class AdministrativeMetadataParser extends ApplParser {
         if (code != null) itemcontenttype.put("code", code);
 
         String text = xmlr.getElementText();
-        if (text != null && text.length() > 0) {
+        if (!Helpers.isNullOrEmpty(text)) {
             itemcontenttype.put("name", text);
 
             if (text.equalsIgnoreCase("Advisory")) {
@@ -329,6 +332,7 @@ public class AdministrativeMetadataParser extends ApplParser {
 
         String text = xmlr.getElementText();
         if (text != null) {
+            text = text.trim();
             if (!this.addInPackages) {
                 map.put("inpackages", null);
                 this.addInPackages = true;
@@ -379,13 +383,13 @@ public class AdministrativeMetadataParser extends ApplParser {
         String text = xmlr.getElementText();
         if (text != null && !text.equalsIgnoreCase("unknown")) {
             setSignals(map);
-            this.signals.add(text);
+            this.signals.add(text.trim());
         }
     }
 
     private void setSignal(XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
         String text = xmlr.getElementText();
-        if (text != null && text.length() > 0) {
+        if (!Helpers.isNullOrEmpty(text)) {
             setSignals(map);
             this.signals.add(text);
 
@@ -432,14 +436,14 @@ public class AdministrativeMetadataParser extends ApplParser {
 
             if (this.urlOnly) {
                 if (name.equalsIgnoreCase("url")) {
-                    Helpers.safeAdd(name.toLowerCase(), xmlr.getElementText(), map);
+                    Helpers.safeAddString(name.toLowerCase(), xmlr.getElementText(), map);
                 }
             } else {
                 switch (name) {
                     case "Type":
                     case "Url":
                     case "PermissionGranted":
-                        Helpers.safeAdd(name.toLowerCase(), xmlr.getElementText(), map);
+                        Helpers.safeAddString(name.toLowerCase(), xmlr.getElementText(), map);
                         break;
                 }
             }

@@ -20,7 +20,7 @@ public class IdentificationParser extends ApplParser {
             case "CompositionType":
             case "EditorialPriority":
             case "FriendlyKey":
-                Helpers.safeAdd(name.toLowerCase(), xmlr.getElementText(), map);
+                Helpers.safeAddString(name.toLowerCase(), xmlr.getElementText(), map);
                 break;
             case "Priority":
             case "RecordSequenceNumber":
