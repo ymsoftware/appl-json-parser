@@ -151,10 +151,8 @@ public class PublicationManagementParser extends ApplParser {
 
     private void setStatus(XMLStreamReader xmlr, Map<String, Object> map) throws XMLStreamException {
         String status = xmlr.getElementText();
-        if (status != null && status.length() > 1) {
-            if (!(status.equalsIgnoreCase("withheld") || status.equalsIgnoreCase("canceled"))) {
-                status = "usable";
-            }
+        if (status != null && (status.equalsIgnoreCase("withheld") || status.equalsIgnoreCase("canceled"))) {
+            status = status.toLowerCase();
         } else {
             status = "usable";
         }
@@ -181,7 +179,7 @@ public class PublicationManagementParser extends ApplParser {
         String type = getCompositionType(xmlr.getAttributeValue("", "CompositionType"));
 
         String id = xmlr.getElementText();
-        if (id != null) {
+        if (Helpers.isUUID(id)) {
             if (!this.addAssociations) {
                 map.put("associations", null);
                 this.addAssociations = true;

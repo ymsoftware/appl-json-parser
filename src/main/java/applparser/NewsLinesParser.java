@@ -270,12 +270,15 @@ public class NewsLinesParser extends ApplParser {
             if (photographer) {
                 this.isPhotographer = true;
                 map.put("photographer", add);
+                return;
             } else if (captionwriter) {
                 this.isCaptionwriter = true;
                 map.put("captionwriter", add);
+                return;
             } else if (editor) {
                 this.isEditor = true;
                 map.put("editor", add);
+                return;
             }
         }
 
@@ -323,7 +326,8 @@ public class NewsLinesParser extends ApplParser {
                 map.put("overlines", null);
                 this.addOverlines = true;
             }
-            this.overlines.add(text.trim());
+            text = text.trim();
+            if (!this.overlines.contains(text)) this.overlines.add(text);
         }
     }
 
@@ -338,7 +342,8 @@ public class NewsLinesParser extends ApplParser {
                 map.put("keywordlines", null);
                 this.addKeywordlines = true;
             }
-            this.keywordlines.add(text.trim());
+            text = text.trim();
+            if (!this.keywordlines.contains(text)) this.keywordlines.add(text);
         }
     }
 

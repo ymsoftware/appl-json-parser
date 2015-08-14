@@ -13,10 +13,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 
@@ -33,22 +30,22 @@ public class ParserTest {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
 
-        String[] queries = new String[]{
-                "q=type:text",
-                "q=type:photo",
-                "q=type:video",
-                "q=type:audio",
-                "q=type:graphic",
-                "q=type:complexdata"
-        };
+        Map<String, Integer> queries = new LinkedHashMap<>();
+        queries.put("q=type:text", 100);
+        queries.put("q=type:photo", 100);
+        queries.put("q=type:video", 100);
+        queries.put("q=type:audio", 10);
+        queries.put("q=type:graphic", 100);
+        queries.put("q=type:complexdata", 10);
+        queries.put("q=_exists_:itemid", 10000);
 
-        int iterations = 5;
+        int start = 0;
 
-        for (String query : queries) {
-            for (int i = 0; i < iterations; i++) {
+        for (String query : queries.keySet()) {
+            for (int i = start; i < (Integer) queries.get(query); i++) {
                 String q = i == 0 ? query : String.format("%s&from=%d", query, i * 10);
                 System.out.println(String.format("\nTesting %s\n=====================================", q));
-                String json = urlToString(PROTEUS_URL + query);
+                String json = urlToString(PROTEUS_URL + q);
 
                 JsonNode hits = mapper.readTree(json).path("hits").path("hits");
                 Iterator<JsonNode> iterator = hits.elements();
@@ -133,8 +130,6 @@ public class ParserTest {
                     int l2 = test.get(key).asText().length();
                     int diff = l1 > l2 ? l1 - l2 : l2 - l1;
                     isEqual = diff / l1 < 0.05;
-                } else if (key.equals("bylines")) {
-                    // do nothing for now
                 } else {
                     isEqual = testNode(field.getValue(), test.get(key));
                 }
@@ -172,7 +167,9 @@ public class ParserTest {
             }
 
         } else if (node.isTextual()) {
-            return node.asText().trim().equals(test.asText().trim());
+            String text1 = node.asText().replaceAll("\\n", "").trim();
+            String text2 = test.asText().replaceAll("\\n", "").trim();
+            return text1.equals(text2);
         } else if (node.isBoolean()) {
             return node.asBoolean() == test.asBoolean();
         } else if (node.isInt()) {

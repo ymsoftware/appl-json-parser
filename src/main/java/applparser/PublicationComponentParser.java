@@ -92,7 +92,7 @@ public class PublicationComponentParser extends ApplParser {
         if (this.hasText) {
             Map<String, Object> text = new LinkedHashMap<String, Object>();
             text.put("nitf", this.text.toString().trim());
-            if (this.words != null) text.put("words", this.words);
+            if (this.words != null && this.words > 0) text.put("words", this.words);
             map.put(this.role, text);
         }
 
@@ -117,7 +117,7 @@ public class PublicationComponentParser extends ApplParser {
 
         if (this.shots != null) {
             if (map.containsKey("shots")) {
-                ((List<Map<String, Object>>) map.get("shots")).addAll(this.shots);
+                map.replace("shots", this.shots);
             } else {
                 map.put("shots", this.shots);
             }

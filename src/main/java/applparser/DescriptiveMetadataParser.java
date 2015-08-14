@@ -766,7 +766,7 @@ public class DescriptiveMetadataParser extends ApplParser {
             company.put("symbols", symbols.values());
         }
         Map<String, Map<String, Object>> industries = this.industries.containsKey(key) ? this.industries.get(key) : null;
-        if (symbols != null && industries.size() > 0) {
+        if (industries != null && industries.size() > 0) {
             company.put("industries", industries.values());
         }
 

@@ -7,6 +7,7 @@ import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by ymetelkin on 8/4/15.
@@ -80,9 +81,34 @@ public class Helpers {
     public static String parseDate(String date) {
         if (date != null && date.length() > 1) {
             if (date.indexOf('T') > 0) {
-                if (date.endsWith("GMT")) {
-                    date = date.replace("GMT", "Z");
-                } else if (!date.endsWith("Z")) {
+//                String[] tokens = date.split("T");
+//                String time = tokens[1];
+//
+//                String[] signs = new String[]{"+", "-"};
+//                for (String sign : signs) {
+//                    if (time.contains(sign)) {
+//                        int idx = time.indexOf(sign);
+//                        time = String.format("%s%s%s", time.substring(0, idx), sign, time.substring(idx + 1).replace(":", ""));
+//                        try {
+//                            date = String.format("%sT%s", tokens[0], time);
+//                            Date test = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").parse(date);
+//                            date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").format(test);
+//                            return date;
+//                        } catch (ParseException e) {
+//                            e.printStackTrace();
+//                        }
+//                        break;
+//                    }
+//                }
+
+                String[] replaces = new String[]{"GMT", "+00:00", "-00:00"};
+                for (String replace : replaces) {
+                    if (date.endsWith(replace)) {
+                        return date.replace(replace, "Z");
+                    }
+                }
+
+                if (!date.endsWith("Z")) {
                     date = date + "Z";
                 }
 
@@ -210,5 +236,24 @@ public class Helpers {
         if (test.length() == 0) return true;
         if (test.trim().length() == 0) return true;
         return false;
+    }
+
+    public static boolean isUUID(String test) {
+        if (test == null) return false;
+        if (test.equals("00000000000000000000000000000000")) return false;
+        if (test.equals("00000000-0000-0000-0000-000000000000")) return false;
+
+        if (test.contains("-")) {
+            if (test.length() != 36) return false;
+        } else if (test.length() == 32) {
+            test = test.replaceFirst("([0-9a-fA-F]{8})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]{4})([0-9a-fA-F]+)", "$1-$2-$3-$4-$5");
+        }
+
+        try {
+            UUID uuid = UUID.fromString(test);
+            return true;
+        } catch (Exception ex) {
+            return false;
+        }
     }
 }

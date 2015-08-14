@@ -2,6 +2,7 @@ package applparser;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -65,7 +66,15 @@ public class RightsMetadataParser extends ApplParser {
             }
         } else {
             if (copyrightnotice == null) {
-                int date = year == 0 ? LocalDate.now().getYear() : year;
+                int date = year;
+                if (map.containsKey("firstcreated")) {
+                    try {
+                        date = Helpers.parseInteger(((String) map.get("firstcreated")).split("-")[0]);
+                    } catch (Exception ex) {
+                        //if (date == 0) date = LocalDate.now().getYear();
+                    }
+                }
+                if (date == 0) date = LocalDate.now().getYear();
 
                 copyrightnotice = String.format("Copyright %d %s. All rights reserved. This material may not be published, broadcast, rewritten or redistributed.", date, copyrightholder);
 
